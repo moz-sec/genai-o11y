@@ -1,0 +1,19 @@
+# Local settings (contains the Grafana admin password)
+.env
+
+# Backups created by scripts/apply-agent-config.sh
+*.bak
+backups/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+.zed/
+
+# Claude Code local files
+.claude/settings.local.json
+.claude/.cc-writes/
+
+# yomiyasu proofreading records
+.yomiyasu/

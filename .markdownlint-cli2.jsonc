@@ -1,0 +1,7 @@
+// MD013 (line length) is off: Japanese text and tables trigger it too often.
+{
+  "config": {
+    "default": true,
+    "MD013": false
+  }
+}
