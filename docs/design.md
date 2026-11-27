@@ -53,6 +53,11 @@ Claude Code と OpenAI Codex CLI の利用状況（使用量・コスト・ツ�
 - `~/.claude/settings.json` の `env` ブロックで設定する。リポジトリ側の `.claude/settings.json` に書いた OTEL 関連の値は無視される。
 - メトリクスの例: `claude_code.token.usage`、`cost.usage`、`session.count`、`lines_of_code.count`、`active_time.total`。ほかに `code_edit_tool.decision`、`commit.count`、`pull_request.count` もある。
 - イベント（ログ）の例: `user_prompt`、`tool_result`、`tool_decision`、`api_request`、`api_error` など
+- 実データで確かめた名前（v2.1.332、2026-11-27、`strict`）
+  - Prometheus のメトリクス名: `claude_code_token_usage_tokens_total`（`type` は `input` / `output` / `cacheRead` / `cacheCreation`）、`claude_code_cost_usage_USD_total`、`claude_code_session_count_total`、`claude_code_active_time_seconds_total`（`type` は `user` / `cli`）、`claude_code_lines_of_code_count_total`（`type` は `added` / `removed`）、`claude_code_commit_count_total`
+  - 共通のラベル: `service_name="claude-code"`、`job="claude-code"`、`model`、`session_id`、`query_source`、`effort`
+  - Loki の `event_name`: `api_request`（`model`、`duration_ms`、`ttft_ms`、`input_tokens`、`output_tokens`、`cache_read_tokens`、`cost_usd` など）、`api_error`（`status_code`）、`tool_result`（`tool_name`、`success`、`duration_ms`）、`tool_decision`、`user_prompt`（`prompt_length`）、`assistant_response`（`response_length`）。ほかに `hook_execution_*`、`mcp_server_connection`、`plugin_loaded` などがある。属性は Loki の構造化メタデータに入り、名前の `.` は `_` になる。
+  - トレースのスパン名: `claude_code.interaction`、`claude_code.llm_request`、`claude_code.tool`、`claude_code.tool.execution`、`claude_code.tool.blocked_on_user`
 - トレースはベータ機能。`CLAUDE_CODE_ENHANCED_TELEMETRY_BETA=1` と `OTEL_TRACES_EXPORTER=otlp` で有効になる。
 - デフォルトのプロトコルは `http/protobuf`、デフォルトのテンポラリティは **delta**。
 - 機微な属性: `user.email`、`user.account_uuid`、`user.account_id`、`user.id`、`organization.id`、`host.name`、`host.id`。`prompt` と `prompt_text` はデフォルトでオフ。`tool_parameters` と `tool_input` は `OTEL_LOG_TOOL_DETAILS=1` のときだけ出力される。
@@ -64,7 +69,9 @@ Claude Code と OpenAI Codex CLI の利用状況（使用量・コスト・ツ�
 - `metrics_exporter` のデフォルト値は `statsig`（OpenAI に送られる）。明示的に `otlp-http` にする。
 - イベントの例: `codex.conversation_starts`、`api_request`、`sse_event`（トークン数）。ほかに `tool_decision`、`tool_result`、`turn_cost` などがある。
 - 機微な属性: `user.email`、`user.account_id`。`tool_result` の `arguments` と `output` は**ログでは常に出力される**（output は 2KB で切り詰め）。
-- `service.name` の値、メトリクスのテンポラリティ、対応している最小バージョンは**未確認**。実装時に実データで確かめる。
+- `service.name` の値、メトリクスのテンポラリティ、対応している最小バージョンは**未確認**。開発環境で Codex を動かせなかったため、実データでは確かめていない。
+  - ダッシュボードは、Codex のログが `service_name="codex"` と `codex.*` のイベント名（`codex.tool_result` など）で届く前提で、Activity のログのパネルにだけ Codex を含めている。
+  - Usage & Cost には Codex のパネルを置いていない。実データでトークンやコストの名前を確かめてから足す。
 
 ### 実行環境
 
@@ -133,6 +140,8 @@ Codex CLI   ─┘        │
 
 - プロトコルは OTLP/HTTP（4318）にそろえる。Claude のデフォルト値に合わせるためと、Codex の HTTP エンドポイント指定がシンプルなため。4317 も `127.0.0.1` で公開しておく。
 - テンポラリティ: Collector に `delta_to_cumulative` を入れる。これで、どのエージェントから delta が来ても Prometheus へ取り込める。加えて、Claude 側でも `OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE=cumulative` を設定しておく。
+- Prometheus では `--enable-feature=created-timestamp-zero-ingestion` を有効にする。OTLP の開始時刻に 0 のサンプルが入るので、新しい系列（新しいセッションなど）の最初の値も `increase()` で数えられる。これがないと、セッション数が 0 になり、トークン数やコストもセッションごとに最初の分が抜ける。
+- ダッシュボードの `increase()` には `anchored` を付けて、範囲の端への外挿をやめる。外挿すると、短い系列の合計が実際より大きくなる（値 5 の系列で 8.96 になった）。
 - 9090 / 3200 / 4040 は公開しない（Grafana 経由で見られるため）。
 
 ### 5.3 収集ポリシー
@@ -156,10 +165,11 @@ Codex CLI   ─┘        │
 ### 5.4 Grafana
 
 - 匿名 Admin は無効にし、`.env` の `GRAFANA_ADMIN_PASSWORD` でログインする。これは localhost だけでも同じ Mac 上のブラウザやほかのプロセスから操作できてしまうことへの最低限の対策である。設定コストもほぼない。
-- ホームダッシュボードは Usage & Cost にする。
+- ホームダッシュボードは Usage & Cost にする。`GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH` で JSON を指定する。Grafana 13 はこの JSON を UID `default-home-dashboard` のコピーとして取り込み、ホームからそこへリダイレクトする。コピーは起動のたびに作り直される。
+- ダッシュボードは `genai-o11y` フォルダにプロビジョニングし、UI からは保存できないようにする（`allowUiUpdates: false`）。変えるときは `grafana/dashboards/` の JSON を直す。
 - コストの扱い: Claude は `claude_code.cost.usage` をそのまま使う。Codex は `codex.turn_cost`（`usage.estimated_usd`）が実データで取れればそれを使い、取れなければトークン数だけを表示する。料金表は持たない（保守が必要になるため）。どちらも「推定値」と表示する（サブスクリプション利用では実際の請求額と一致しないため）。
 - Codex のトークン数やコストがメトリクスとして出ていない場合は、Loki のログから集計するクエリ（LogQL の `sum_over_time` など）で代用する。Collector でログをメトリクスに変換する処理は作らない。
-- 両ダッシュボードに、変数 `service`（claude-code / codex）、`model` を置く。
+- 両ダッシュボードに、変数 `service`（claude-code / codex）、`model` を置く。「All」の値は `.+` にする（Loki は `.*` だけのストリームセレクタを受け付けないため）。
 - Claude と Codex ではメトリクス名と属性名が違うため、パネルはエージェントごとにクエリを分けるか、`or` で合成する。どちらかは実装者に任せる。「Claude と Codex のトークン数とコストを同じ時間軸で比べられること」が満たされればよい。
 - Prometheus でのメトリクス名（単位や `_total` が付くかどうか）は、実データを流して確かめてからクエリを書く。
 
@@ -220,4 +230,4 @@ Codex CLI   ─┘        │
 - Collector 設定の分け方（マージするか、ファイルを丸ごと分けるか）
 - ダッシュボードのパネル構成の細部とクエリの書き方
 - テストデータの送り方（`telemetrygen`、`curl` で OTLP/JSON を送る、など）
-- 未確認事項の確認（Codex の `service.name`、メトリクスのテンポラリティ、Prometheus でのメトリクス名）と、その結果に合わせた調整
+- 未確認事項の確認（Codex の `service.name`、メトリクスのテンポラリティ、Prometheus でのメトリクス名）と、その結果に合わせた調整。Claude Code は §3 のとおり確認済み。Codex は未確認。

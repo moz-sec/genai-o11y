@@ -175,8 +175,33 @@ check_sanitize() {
   pass sanitize
 }
 
+check_dashboards() {
+  local uid dash home
+  for uid in genai-usage-cost genai-activity; do
+    dash="$(grafana_api GET "/api/dashboards/uid/$uid" 2>/dev/null)" ||
+      { fail dashboards "$uid not found"; return 1; }
+    jq -e '.meta.folderTitle == "genai-o11y"' >/dev/null <<<"$dash" ||
+      { fail dashboards "$uid is not in the genai-o11y folder"; return 1; }
+    jq -e '[.dashboard.templating.list[].name] | index("service") and index("model")' >/dev/null <<<"$dash" ||
+      { fail dashboards "$uid lacks the service and model variables"; return 1; }
+  done
+  # Grafana 12+ imports the home JSON as a copy and answers with a redirect to it.
+  home="$(grafana_api GET /api/dashboards/home)"
+  uid="$(jq -r '.dashboard.uid // (.redirectUri // "" | capture("^/d/(?<u>[^/]+)").u) // ""' <<<"$home")"
+  [[ -n "$uid" ]] && home="$(grafana_api GET "/api/dashboards/uid/$uid")"
+  jq -e '.dashboard.title == "GenAI Usage & Cost"' >/dev/null <<<"$home" ||
+    { fail dashboards "home dashboard is not GenAI Usage & Cost"; return 1; }
+  # The leak panel must query Loki, so it sees every stored log line.
+  jq -e '[.dashboard.panels[] | .panels[]? // . |
+      select(.title == "Sanitization leaks" or .title == "サニタイズ漏れ") |
+      .targets[] | select(.datasource.uid == "loki" and (.expr | length > 0))] | length > 0' \
+    >/dev/null <<<"$dash" ||
+    { fail dashboards "genai-activity has no Sanitization leaks panel with a LogQL query"; return 1; }
+  pass dashboards
+}
+
 usage() {
-  echo "usage: $0 {ports|auth|collector|sanitize}" >&2
+  echo "usage: $0 {ports|auth|collector|sanitize|dashboards}" >&2
   exit 1
 }
 
@@ -185,5 +210,6 @@ case "${1:-}" in
   auth) check_auth ;;
   collector) check_collector ;;
   sanitize) check_sanitize ;;
+  dashboards) check_dashboards ;;
   *) usage ;;
 esac

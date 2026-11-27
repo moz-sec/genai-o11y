@@ -14,15 +14,18 @@ services:
       GF_AUTH_ANONYMOUS_ENABLED: "false"
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?set GRAFANA_ADMIN_PASSWORD in .env}
       # Keep about 30 days of data (docs/design.md §5.6).
-      PROMETHEUS_EXTRA_ARGS: --storage.tsdb.retention.time=30d
+      PROMETHEUS_EXTRA_ARGS: --storage.tsdb.retention.time=30d --enable-feature=created-timestamp-zero-ingestion
       LOKI_EXTRA_ARGS: -compactor.retention-enabled=true -compactor.delete-request-store=filesystem -store.retention=720h
       TEMPO_EXTRA_ARGS: -backend-worker.compaction.block-retention=720h -backend-scheduler.provider.work.compaction.block-retention=720h
       # The profile file is merged on top of base.yaml (docs/design.md §5.3).
       OTELCOL_EXTRA_ARGS: --config=file:/otel-lgtm/profile.yaml
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /otel-lgtm/grafana/conf/provisioning/dashboards/genai/usage-cost.json
     volumes:
       - genai-o11y-data:/data
       - ./collector/base.yaml:/otel-lgtm/otelcol-config.yaml:ro
       - ./collector/${PROFILE:-strict}.yaml:/otel-lgtm/profile.yaml:ro
+      - ./grafana/provisioning/dashboards/genai.yaml:/otel-lgtm/grafana/conf/provisioning/dashboards/genai.yaml:ro
+      - ./grafana/dashboards:/otel-lgtm/grafana/conf/provisioning/dashboards/genai:ro
 
 volumes:
   genai-o11y-data:

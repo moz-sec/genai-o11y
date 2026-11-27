@@ -1,0 +1,13 @@
+# Loads the genai-o11y dashboards into the "genai-o11y" folder.
+apiVersion: 1
+
+providers:
+  - name: genai-o11y
+    type: file
+    folder: genai-o11y
+    folderUid: genai-o11y
+    disableDeletion: true
+    allowUiUpdates: false
+    options:
+      path: /otel-lgtm/grafana/conf/provisioning/dashboards/genai
+      foldersFromFilesStructure: false

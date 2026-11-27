@@ -28,6 +28,8 @@ It shows them on Grafana dashboards running on your own machine.
   sessions, active time and lines of code.
   *Activity* shows tool calls and errors, latency, traces, and a
   sanitization-leak check.
+  Codex is not yet verified with real data: *Usage & Cost* shows Claude Code only,
+  and *Activity* includes Codex logs on a best-effort basis.
 - **Safe agent setup**. A script merges the needed settings into
   `~/.claude/settings.json` and `~/.codex/config.toml`.
   It runs as a dry run by default, takes a backup, and stops on conflicts.
