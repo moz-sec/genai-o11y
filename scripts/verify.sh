@@ -200,12 +200,22 @@ check_dashboards() {
   pass dashboards
 }
 
+# check_all runs every check, even after a failure, and fails if any failed.
+check_all() {
+  local check failed=0
+  for check in ports auth collector sanitize dashboards; do
+    "check_$check" || failed=1
+  done
+  return "$failed"
+}
+
 usage() {
-  echo "usage: $0 {ports|auth|collector|sanitize|dashboards}" >&2
+  echo "usage: $0 [all|ports|auth|collector|sanitize|dashboards]  (default: all)" >&2
   exit 1
 }
 
-case "${1:-}" in
+case "${1:-all}" in
+  all) check_all ;;
   ports) check_ports ;;
   auth) check_auth ;;
   collector) check_collector ;;

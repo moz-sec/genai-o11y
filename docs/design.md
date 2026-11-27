@@ -110,7 +110,7 @@ genai-o11y/
 ├── scripts/
 │   ├── apply-agent-config.sh  # バックアップしてからマージ。既定は dry-run
 │   ├── agent-env.sh           # 今のシェルだけで有効にする（ファイルは変えない）
-│   └── verify.sh              # ポートのバインドとサニタイズを確認
+│   └── verify.sh              # ポート、ログイン、Collector、サニタイズ、ダッシュボードを確認
 ├── docs/
 │   └── design.md              # この設計書
 ├── AGENTS.md                  # コーディングエージェント向けの規約
@@ -138,6 +138,8 @@ Codex CLI   ─┘        │
                       │  volume: genai-o11y-data:/data
 ```
 
+- Collector のつなぎ方: `collector/base.yaml` を同梱の `/otel-lgtm/otelcol-config.yaml` の代わりにマウントする。プロファイルのファイル（`collector/${PROFILE}.yaml`）は `/otel-lgtm/profile.yaml` にマウントし、`OTELCOL_EXTRA_ARGS=--config=file:/otel-lgtm/profile.yaml` で 2 つ目の設定として渡す。Collector は 2 つをマージする。プロファイルのファイルは processor と `service.pipelines` を持つ。`PROFILE` を変えて `docker compose up -d` を実行すると、マウント先が変わるのでコンテナが作り直される。
+- 同梱の設定から外したもの: profiles のパイプライン、debug exporter、OTLP の CORS。Collector 自身のメトリクスの収集間隔は 1 秒から 15 秒にした。
 - プロトコルは OTLP/HTTP（4318）にそろえる。Claude のデフォルト値に合わせるためと、Codex の HTTP エンドポイント指定がシンプルなため。4317 も `127.0.0.1` で公開しておく。
 - テンポラリティ: Collector に `delta_to_cumulative` を入れる。これで、どのエージェントから delta が来ても Prometheus へ取り込める。加えて、Claude 側でも `OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE=cumulative` を設定しておく。
 - Prometheus では `--enable-feature=created-timestamp-zero-ingestion` を有効にする。OTLP の開始時刻に 0 のサンプルが入るので、新しい系列（新しいセッションなど）の最初の値も `increase()` で数えられる。これがないと、セッション数が 0 になり、トークン数やコストもセッションごとに最初の分が抜ける。
@@ -197,6 +199,8 @@ Codex CLI   ─┘        │
 - データを消すときは `docker compose down -v` を使う。README に書く。
 
 ### 5.7 検証（`scripts/verify.sh`）
+
+サブコマンドは `ports`、`auth`、`collector`、`sanitize`、`dashboards`、`all` である。引数なしで実行すると `all` になり、すべてを順に実行する。1 つでも失敗すると終了コード 1 を返す。
 
 1. `docker compose ps` / `docker port` で、全ポートが `127.0.0.1` にバインドされていることを確認する。LAN の IP から 3000 / 4318 に接続できないことも確認する。
 2. 匿名で Grafana API にアクセスすると 401 が返ることを確認する。

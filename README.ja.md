@@ -7,10 +7,6 @@ AI コーディングエージェントのテレメトリを、ローカルだ�
 [OpenAI Codex CLI](https://developers.openai.com/codex/config-advanced) が出力する
 OpenTelemetry のメトリクス、ログ、トレースを集め、ローカルの Grafana ダッシュボードで表示します。
 
-> [!WARNING]
-> **開発中です。** 設計は [docs/design.md](docs/design.md) にあります。
-> 以下の手順は完成後の使い方で、まだ動かない場合があります。
-
 ## 特徴
 
 - コンテナは 1 つだけで、公式イメージの
@@ -42,7 +38,7 @@ OpenTelemetry のメトリクス、ログ、トレースを集め、ローカル
 ```sh
 cp .env.example .env            # PROFILE=strict|standard と GRAFANA_ADMIN_PASSWORD を設定する
 docker compose up -d
-./scripts/verify.sh             # バインドとサニタイズを確認する
+./scripts/verify.sh             # バインド、ログイン、サニタイズ、ダッシュボードを確認する
 ```
 
 次に、エージェントのテレメトリを有効にします。次の 2 つの方法から選んでください。
@@ -68,6 +64,50 @@ Codex にはこれらの設定を環境変数で渡す方法がないため、`c
 `~/.claude/settings.json` の `env` に同じキーがある場合は、そちらの値が優先されます。
 
 <http://localhost:3000> を開き、`admin` でログインします。
+
+## 動作の確認
+
+`./scripts/verify.sh` は、偽のテレメトリを送って、何が保存されたかを確かめます。
+確認ごとに `PASS` か `FAIL` を 1 行ずつ出し、1 つでも失敗すると終了コード 1 を返します。
+1 つだけ実行するときは `./scripts/verify.sh <ports|auth|collector|sanitize|dashboards>` とします。
+
+続けて、実際のエージェントで確かめます。
+
+1. テレメトリを有効にした Claude Code（または Codex）を数分使います。
+   ファイルを読む、コマンドを実行するなど、ツールを使う依頼をしてください。
+2. *GenAI Usage & Cost*（ホームのダッシュボード）を開きます。
+   トークン数、推定コスト、セッション数に値が出ます。
+3. *GenAI Activity* を開きます。ツールの実行数と API のレイテンシに値が出ます。
+   `PROFILE=strict` なら、*Sanitization leaks* は 0（緑）になります。
+
+メトリクスはおよそ 1 分ごとに Prometheus に届くため、最初の値が出るまで 1 分ほどかかります。
+Codex は実データでの確認がまだです。
+
+## プロファイルの切り替え
+
+1. `.env` の `PROFILE` を変えます。
+2. `docker compose up -d` を実行します。コンテナが新しいプロファイルで作り直されます。
+3. 新しいプロファイルでエージェントの設定を適用します
+   （`apply-agent-config.sh <profile>` か `agent-env.sh <profile>`）。
+   `apply-agent-config.sh` は、すでに別の値が入っているキーがあると中止します。
+   その場合は、表示されたキーを手で直してください。
+
+切り替える前に保存したデータは、そのまま残ります。
+`standard` から `strict` に移るときは、`docker compose down -v` で消してから始め直してください
+（保存したテレメトリはすべて消えます）。
+
+## イメージの更新
+
+1. 新しい `grafana/otel-lgtm:<version>@sha256:<digest>` を、
+   `.env.example` と自分の `.env` の `LGTM_IMAGE` に設定します。
+2. 同梱の Collector の設定と `collector/base.yaml` を比べます。
+
+   ```sh
+   docker run --rm --entrypoint cat "$LGTM_IMAGE" /otel-lgtm/otelcol-config.yaml | diff - collector/base.yaml
+   ```
+
+   バージョンによって、exporter のエンドポイントやコンポーネントの名前が変わることがあります。
+3. `docker compose up -d` と `./scripts/verify.sh` を実行します。
 
 ## 収集プロファイル
 

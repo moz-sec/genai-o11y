@@ -8,10 +8,6 @@ genai-o11y collects OpenTelemetry metrics, logs, and traces from
 [OpenAI Codex CLI](https://developers.openai.com/codex/config-advanced).
 It shows them on Grafana dashboards running on your own machine.
 
-> [!WARNING]
-> **Status: under development.** The design is in [docs/design.md](docs/design.md).
-> The setup steps below describe the intended usage and may not work yet.
-
 ## Features
 
 - **One container**. It runs the official
@@ -47,7 +43,7 @@ It shows them on Grafana dashboards running on your own machine.
 ```sh
 cp .env.example .env            # set PROFILE=strict|standard and GRAFANA_ADMIN_PASSWORD
 docker compose up -d
-./scripts/verify.sh             # checks bindings and sanitization
+./scripts/verify.sh             # checks bindings, login, sanitization and dashboards
 ```
 
 Then turn on telemetry in the agents. Pick one of the two ways.
@@ -73,6 +69,50 @@ It calls `codex`, so a `codex` shell function you already have still runs.
 If `~/.claude/settings.json` sets the same `env` keys, those values win.
 
 Open <http://localhost:3000> and sign in as `admin`.
+
+## Check that it works
+
+`./scripts/verify.sh` sends fake telemetry and checks what was stored.
+It prints one `PASS` or `FAIL` line per check and exits with 1 if any check fails.
+Run one check with `./scripts/verify.sh <ports|auth|collector|sanitize|dashboards>`.
+
+Then check with a real agent:
+
+1. Use Claude Code (or Codex) for a few minutes with telemetry on.
+   Ask it to read a file and run a command, so that tools are called.
+2. Open *GenAI Usage & Cost* (the home dashboard).
+   Tokens, estimated cost and sessions should show values.
+3. Open *GenAI Activity*. Tool calls and API latency should show values.
+   With `PROFILE=strict`, *Sanitization leaks* should be 0 (green).
+
+Metrics reach Prometheus about once a minute, so the first values can take a minute to appear.
+Codex is not yet verified with real data.
+
+## Switch the profile
+
+1. Set `PROFILE` in `.env`.
+2. Run `docker compose up -d`. The container is recreated with the new profile.
+3. Apply the agent settings for the new profile
+   (`apply-agent-config.sh <profile>` or `agent-env.sh <profile>`).
+   `apply-agent-config.sh` stops if a key already has a different value.
+   Change those keys by hand in that case.
+
+Data stored before the switch stays as it was.
+When you move from `standard` to `strict`, delete it with
+`docker compose down -v` (this deletes all stored telemetry) and start again.
+
+## Update the image
+
+1. Set the new `grafana/otel-lgtm:<version>@sha256:<digest>` as `LGTM_IMAGE`
+   in `.env.example` and in your `.env`.
+2. Compare the bundled Collector config with `collector/base.yaml`:
+
+   ```sh
+   docker run --rm --entrypoint cat "$LGTM_IMAGE" /otel-lgtm/otelcol-config.yaml | diff - collector/base.yaml
+   ```
+
+   Exporter endpoints or component names can change between versions.
+3. Run `docker compose up -d` and `./scripts/verify.sh`.
 
 ## Collection profiles
 
