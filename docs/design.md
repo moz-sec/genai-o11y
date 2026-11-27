@@ -171,6 +171,10 @@ Codex CLI   ─┘        │
 - ダッシュボードは `genai-o11y` フォルダにプロビジョニングし、UI からは保存できないようにする（`allowUiUpdates: false`）。変えるときは `grafana/dashboards/` の JSON を直す。
 - コストの扱い: Claude は `claude_code.cost.usage` をそのまま使う。Codex は `codex.turn_cost`（`usage.estimated_usd`）が実データで取れればそれを使い、取れなければトークン数だけを表示する。料金表は持たない（保守が必要になるため）。どちらも「推定値」と表示する（サブスクリプション利用では実際の請求額と一致しないため）。
 - Codex のトークン数やコストがメトリクスとして出ていない場合は、Loki のログから集計するクエリ（LogQL の `sum_over_time` など）で代用する。Collector でログをメトリクスに変換する処理は作らない。
+- Activity には、ログとトレースをそのまま見るパネルも置く。
+  - Events：Loki のイベントの一覧。変数 `event` で種類を絞る。イベント名は Loki のラベルではなく構造化メタデータに入るため、Loki から値の一覧を取れない。そこで、§3 で観測した名前を `custom` 変数に並べる。
+  - Recent traces：Tempo の検索結果。Trace ID のリンクで変数 `trace_id` を設定し、Trace detail（`queryType: traceId`）にスパンを表示する。
+  - Spans by name and status：Tempo の metrics generator が作る `traces_spanmetrics_calls_total` の件数。所要時間のヒストグラムは上限が約 16 秒で長いスパンを測れないため、表示しない。
 - 両ダッシュボードに、変数 `service`（claude-code / codex）、`model` を置く。「All」の値は `.+` にする（Loki は `.*` だけのストリームセレクタを受け付けないため）。
 - Claude と Codex ではメトリクス名と属性名が違うため、パネルはエージェントごとにクエリを分けるか、`or` で合成する。どちらかは実装者に任せる。「Claude と Codex のトークン数とコストを同じ時間軸で比べられること」が満たされればよい。
 - Prometheus でのメトリクス名（単位や `_total` が付くかどうか）は、実データを流して確かめてからクエリを書く。

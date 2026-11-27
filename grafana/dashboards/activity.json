@@ -1,7 +1,7 @@
 {
   "uid": "genai-activity",
   "title": "GenAI Activity",
-  "description": "Tool calls, API errors and latency, traces, and a sanitization check.",
+  "description": "Tool calls, API errors and latency, events, traces, and a sanitization check.",
   "tags": [
     "genai-o11y"
   ],
@@ -69,6 +69,111 @@
           ]
         },
         "sort": 1
+      },
+      {
+        "name": "event",
+        "label": "Event",
+        "type": "custom",
+        "query": "user_prompt,assistant_response,api_request,api_error,tool_decision,tool_result,hook_execution_start,hook_execution_complete,mcp_server_connection,plugin_loaded,codex.user_prompt,codex.api_request,codex.sse_event,codex.tool_decision,codex.tool_result",
+        "options": [
+          {
+            "text": "user_prompt",
+            "value": "user_prompt",
+            "selected": false
+          },
+          {
+            "text": "assistant_response",
+            "value": "assistant_response",
+            "selected": false
+          },
+          {
+            "text": "api_request",
+            "value": "api_request",
+            "selected": false
+          },
+          {
+            "text": "api_error",
+            "value": "api_error",
+            "selected": false
+          },
+          {
+            "text": "tool_decision",
+            "value": "tool_decision",
+            "selected": false
+          },
+          {
+            "text": "tool_result",
+            "value": "tool_result",
+            "selected": false
+          },
+          {
+            "text": "hook_execution_start",
+            "value": "hook_execution_start",
+            "selected": false
+          },
+          {
+            "text": "hook_execution_complete",
+            "value": "hook_execution_complete",
+            "selected": false
+          },
+          {
+            "text": "mcp_server_connection",
+            "value": "mcp_server_connection",
+            "selected": false
+          },
+          {
+            "text": "plugin_loaded",
+            "value": "plugin_loaded",
+            "selected": false
+          },
+          {
+            "text": "codex.user_prompt",
+            "value": "codex.user_prompt",
+            "selected": false
+          },
+          {
+            "text": "codex.api_request",
+            "value": "codex.api_request",
+            "selected": false
+          },
+          {
+            "text": "codex.sse_event",
+            "value": "codex.sse_event",
+            "selected": false
+          },
+          {
+            "text": "codex.tool_decision",
+            "value": "codex.tool_decision",
+            "selected": false
+          },
+          {
+            "text": "codex.tool_result",
+            "value": "codex.tool_result",
+            "selected": false
+          }
+        ],
+        "includeAll": true,
+        "multi": true,
+        "allValue": ".+",
+        "current": {
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        }
+      },
+      {
+        "name": "trace_id",
+        "label": "Trace ID",
+        "type": "textbox",
+        "query": "",
+        "current": {
+          "text": "",
+          "value": ""
+        },
+        "description": "Click a trace ID in Recent traces, or paste one."
       }
     ]
   },
@@ -325,7 +430,7 @@
     {
       "id": 7,
       "type": "row",
-      "title": "Traces and privacy",
+      "title": "Events (logs)",
       "collapsed": false,
       "gridPos": {
         "x": 0,
@@ -337,6 +442,58 @@
     },
     {
       "id": 8,
+      "type": "logs",
+      "title": "Events",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 21,
+        "w": 24,
+        "h": 14
+      },
+      "targets": [
+        {
+          "expr": "{service_name=~\"$service\"} | event_name=~\"$event\"",
+          "queryType": "range",
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "description": "Agent events from Loki. Open a line to see its attributes. With PROFILE=strict, prompts, tool arguments and identities are already removed.",
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": false,
+        "prettifyLogMessage": false,
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
+        "dedupStrategy": "none"
+      }
+    },
+    {
+      "id": 9,
+      "type": "row",
+      "title": "Traces",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 35,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 10,
       "type": "table",
       "title": "Recent traces",
       "datasource": {
@@ -345,9 +502,9 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 21,
-        "w": 16,
-        "h": 10
+        "y": 36,
+        "w": 12,
+        "h": 12
       },
       "targets": [
         {
@@ -364,12 +521,129 @@
       ],
       "fieldConfig": {
         "defaults": {},
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Trace ID"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Show in Trace detail",
+                    "url": "/d/genai-activity/?${__url_time_range}&${service:queryparam}&${model:queryparam}&${event:queryparam}&var-trace_id=${__value.raw}"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
       },
-      "description": "Click a trace ID to open it."
+      "description": "Click a trace ID to show it in Trace detail."
     },
     {
-      "id": 9,
+      "id": 11,
+      "type": "timeseries",
+      "title": "Spans by name and status",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 36,
+        "w": 12,
+        "h": 12
+      },
+      "targets": [
+        {
+          "expr": "sum by (span_name, status_code) (increase(traces_spanmetrics_calls_total{service=~\"$service\"}[$__interval] anchored))",
+          "legendFormat": "{{span_name}} {{status_code}}",
+          "range": true,
+          "instant": false,
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "bars",
+            "stacking": {
+              "mode": "normal"
+            },
+            "fillOpacity": 80
+          }
+        },
+        "overrides": []
+      },
+      "description": "Span counts generated from traces by Tempo.",
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "sum"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 12,
+      "type": "traces",
+      "title": "Trace detail",
+      "datasource": {
+        "type": "tempo",
+        "uid": "tempo"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 48,
+        "w": 24,
+        "h": 16
+      },
+      "targets": [
+        {
+          "queryType": "traceId",
+          "query": "$trace_id",
+          "refId": "A",
+          "datasource": {
+            "type": "tempo",
+            "uid": "tempo"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "description": "Shows the trace whose ID is in the Trace ID variable. Until you pick one, this panel shows \"trace id is required\"."
+    },
+    {
+      "id": 13,
+      "type": "row",
+      "title": "Privacy",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 64,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 14,
       "type": "stat",
       "title": "Sanitization leaks",
       "datasource": {
@@ -377,8 +651,8 @@
         "uid": "loki"
       },
       "gridPos": {
-        "x": 16,
-        "y": 21,
+        "x": 0,
+        "y": 65,
         "w": 8,
         "h": 10
       },

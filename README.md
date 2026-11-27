@@ -22,8 +22,8 @@ It shows them on Grafana dashboards running on your own machine.
   The `standard` profile removes only prompts and keeps more detail for analysis.
 - **Ready-made dashboards**. *Usage & Cost* shows tokens and estimated cost,
   sessions, active time and lines of code.
-  *Activity* shows tool calls and errors, latency, traces, and a
-  sanitization-leak check.
+  *Activity* shows tool calls and errors, latency, the event log,
+  traces (click one to see its spans), and a sanitization-leak check.
   Codex is not yet verified with real data: *Usage & Cost* shows Claude Code only,
   and *Activity* includes Codex logs on a best-effort basis.
 - **Safe agent setup**. A script merges the needed settings into
@@ -82,7 +82,8 @@ Then check with a real agent:
    Ask it to read a file and run a command, so that tools are called.
 2. Open *GenAI Usage & Cost* (the home dashboard).
    Tokens, estimated cost and sessions should show values.
-3. Open *GenAI Activity*. Tool calls and API latency should show values.
+3. Open *GenAI Activity*. Tool calls, API latency and *Events* should show values.
+   Click a trace ID in *Recent traces* to see its spans in *Trace detail*.
    With `PROFILE=strict`, *Sanitization leaks* should be 0 (green).
 
 Metrics reach Prometheus about once a minute, so the first values can take a minute to appear.
