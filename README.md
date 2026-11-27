@@ -137,6 +137,11 @@ See [docs/design.md](docs/design.md) for the exact attribute list.
   Check any policy that applies to the machine before you use it.
 - Binding ports to `127.0.0.1` blocks inbound access from other machines.
   It does not restrict outbound traffic from the container.
+- Only Grafana (with a password) and OTLP are published by default.
+  To call the Prometheus (9090), Loki (3100) or Tempo (3200) APIs directly, start with
+  `docker compose -f compose.yaml -f compose.debug.yaml up -d`.
+  These APIs have no authentication, so any process on this machine can read the data
+  (and Loki can delete it). Go back with `docker compose up -d --force-recreate`.
 - Enable disk encryption (FileVault) to protect the stored data.
 - Metrics, logs and traces are kept for 30 days.
   To delete all stored telemetry, run `docker compose down -v`.

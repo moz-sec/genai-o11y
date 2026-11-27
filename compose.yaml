@@ -1,5 +1,6 @@
 # genai-o11y: a single grafana/otel-lgtm container, reachable only from localhost.
-# Hard rule: every published port uses 127.0.0.1. Never publish 9090, 3200 or 4040.
+# Hard rule: every published port uses 127.0.0.1. Do not publish 9090, 3100, 3200 or 4040 here;
+# compose.debug.yaml opens 9090, 3100 and 3200 on request.
 name: genai-o11y
 
 services:

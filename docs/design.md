@@ -144,7 +144,8 @@ Codex CLI   ─┘        │
 - テンポラリティ: Collector に `delta_to_cumulative` を入れる。これで、どのエージェントから delta が来ても Prometheus へ取り込める。加えて、Claude 側でも `OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE=cumulative` を設定しておく。
 - Prometheus では `--enable-feature=created-timestamp-zero-ingestion` を有効にする。OTLP の開始時刻に 0 のサンプルが入るので、新しい系列（新しいセッションなど）の最初の値も `increase()` で数えられる。これがないと、セッション数が 0 になり、トークン数やコストもセッションごとに最初の分が抜ける。
 - ダッシュボードの `increase()` には `anchored` を付けて、範囲の端への外挿をやめる。外挿すると、短い系列の合計が実際より大きくなる（値 5 の系列で 8.96 になった）。
-- 9090 / 3200 / 4040 は公開しない（Grafana 経由で見られるため）。
+- 9090（Prometheus）/ 3100（Loki）/ 3200（Tempo）/ 4040（Pyroscope）は、デフォルトでは公開しない。Grafana 経由で見られるうえ、これらの API には認証がないため。`127.0.0.1` に絞っても、同じマシン上のプロセスからは読める（Loki は削除もできる）。
+- API を直接触りたいときのために、オプトインの `compose.debug.yaml` を置く。`docker compose -f compose.yaml -f compose.debug.yaml up -d` のときだけ 9090 / 3100 / 3200 を `127.0.0.1` に公開する。4040 は使っていないので公開しない。`verify.sh` はこれらのポートが開いていれば WARN を出し、`127.0.0.1` 以外なら失敗にする。
 
 ### 5.3 収集ポリシー
 
@@ -226,7 +227,7 @@ Codex CLI   ─┘        │
 
 ### 設計者（Claude）の判断（ユーザーが確認する前提）
 
-- OTLP/HTTP にそろえる。9090 / 3200 / 4040 は公開しない。
+- OTLP/HTTP にそろえる。9090 / 3200 / 4040 は公開しない（のちに、オプトインの `compose.debug.yaml` でだけ 9090 / 3100 / 3200 を開けられるようにした）。
 - Grafana の匿名 Admin を無効にし、パスワード認証にする。
 - `standard` プロファイルではツール引数・個人識別属性を残す。
 - プロファイルのデフォルトは `strict` にする（公開するツールのため、安全側に倒す）。

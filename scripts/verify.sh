@@ -21,9 +21,15 @@ check_ports() {
     [[ "$out" == "127.0.0.1:$port" ]] ||
       { fail ports "$port is published as '${out:-nothing}', want 127.0.0.1:$port"; return 1; }
   done
-  for port in 9090 3200 4040; do
+  out="$(docker compose port lgtm 4040 2>/dev/null || true)"
+  [[ -z "$out" ]] || { fail ports "4040 must not be published (got $out)"; return 1; }
+  # compose.debug.yaml may open these; they must then be on 127.0.0.1 only.
+  for port in 9090 3100 3200; do
     out="$(docker compose port lgtm "$port" 2>/dev/null || true)"
-    [[ -z "$out" ]] || { fail ports "$port must not be published (got $out)"; return 1; }
+    [[ -z "$out" ]] && continue
+    [[ "$out" == "127.0.0.1:$port" ]] ||
+      { fail ports "$port is published as '$out', want 127.0.0.1:$port or nothing"; return 1; }
+    echo "WARN ports: debug port $port is open without authentication (compose.debug.yaml)"
   done
   cid="$(docker compose ps -q lgtm)"
   [[ -n "$cid" ]] || { fail ports "container lgtm is not running"; return 1; }

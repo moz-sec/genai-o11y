@@ -28,7 +28,8 @@ Read it before you make a non-trivial change.
 These protect users' data. Never break them, even if a task seems to require it.
 
 1. **Never bind to `0.0.0.0`**. Every published port must use `127.0.0.1:<host>:<container>`.
-   Do not publish 9090, 3200, or 4040.
+   `compose.yaml` must not publish 9090, 3100, 3200, or 4040 (they have no authentication).
+   Only the opt-in `compose.debug.yaml` may publish 9090, 3100, and 3200. Never publish 4040.
 2. **Pin the image**. Use `grafana/otel-lgtm:<version>@sha256:<digest>`.
    When you bump it, compare the new image's bundled `otelcol-config.yaml`
    with `collector/base.yaml`.
