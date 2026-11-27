@@ -1,0 +1,6 @@
+# Mounted over the image's grafana-dashboards.yaml to drop the bundled
+# RED Metrics and JVM Metrics dashboards (they do not apply to AI agents).
+# Check this file's path again when you bump the image.
+apiVersion: 1
+
+providers: []

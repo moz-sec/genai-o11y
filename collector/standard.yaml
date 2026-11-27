@@ -1,0 +1,41 @@
+# profile: standard
+# Drops prompt text and raw API bodies. Keeps tool details and identity attributes.
+# See docs/design.md §5.3.
+
+processors:
+  filter/raw_bodies:
+    error_mode: ignore
+    logs:
+      log_record:
+        - 'IsMatch(attributes["event.name"], "api_(request|response)_body$")'
+        - 'IsString(body) and IsMatch(body, "api_(request|response)_body$")'
+
+  transform/prompts:
+    error_mode: ignore
+    log_statements:
+      - context: log
+        statements:
+          - delete_matching_keys(attributes, "^(prompt|prompt_text|response|assistant_response)$")
+    trace_statements:
+      - context: span
+        statements:
+          - delete_matching_keys(attributes, "^(prompt|prompt_text|response|assistant_response)$")
+
+  delta_to_cumulative:
+
+  batch:
+
+service:
+  pipelines:
+    logs:
+      receivers: [otlp]
+      processors: [filter/raw_bodies, transform/prompts, batch]
+      exporters: [otlp_http/logs]
+    metrics:
+      receivers: [otlp, prometheus/collector]
+      processors: [delta_to_cumulative, batch]
+      exporters: [otlp_http/metrics]
+    traces:
+      receivers: [otlp]
+      processors: [transform/prompts, batch]
+      exporters: [otlp_http/traces]

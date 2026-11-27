@@ -8,10 +8,6 @@ genai-o11y collects OpenTelemetry metrics, logs, and traces from
 [OpenAI Codex CLI](https://developers.openai.com/codex/config-advanced).
 It shows them on Grafana dashboards running on your own machine.
 
-> [!WARNING]
-> **Status: under development.** The design is in [docs/design.md](docs/design.md).
-> The setup steps below describe the intended usage and may not work yet.
-
 ## Features
 
 - **One container**. It runs the official
@@ -25,12 +21,16 @@ It shows them on Grafana dashboards running on your own machine.
   It also removes emails, account IDs and host names.
   The `standard` profile removes only prompts and keeps more detail for analysis.
 - **Ready-made dashboards**. *Usage & Cost* shows tokens and estimated cost,
-  sessions, active time and lines of code.
-  *Activity* shows tool calls and errors, latency, traces, and a
-  sanitization-leak check.
+  sessions, prompts, API requests and errors, active time, commits, lines of code,
+  the edit accept rate, a per-model breakdown and the most expensive sessions.
+  *Activity* shows tool calls and errors, latency, the event log,
+  traces (click one to see its spans), and a sanitization-leak check.
+  Codex is not yet verified with real data: *Usage & Cost* shows Claude Code only,
+  and *Activity* includes Codex logs on a best-effort basis.
 - **Safe agent setup**. A script merges the needed settings into
   `~/.claude/settings.json` and `~/.codex/config.toml`.
   It runs as a dry run by default, takes a backup, and stops on conflicts.
+  If you would rather not touch those files, turn telemetry on for one shell only.
 
 ## Requirements
 
@@ -44,12 +44,77 @@ It shows them on Grafana dashboards running on your own machine.
 ```sh
 cp .env.example .env            # set PROFILE=strict|standard and GRAFANA_ADMIN_PASSWORD
 docker compose up -d
-./scripts/apply-agent-config.sh strict          # dry run: shows the diff
-./scripts/apply-agent-config.sh strict --apply  # writes the settings
-./scripts/verify.sh                             # checks bindings and sanitization
+./scripts/verify.sh             # checks bindings, login, sanitization and dashboards
 ```
 
+Then turn on telemetry in the agents. Pick one of the two ways.
+
+**Persistent**: write the settings to the agents' config files.
+
+```sh
+./scripts/apply-agent-config.sh strict          # dry run: shows the diff
+./scripts/apply-agent-config.sh strict --apply  # writes the settings (with a backup)
+```
+
+**This shell only**: nothing is written to `~/.claude` or `~/.codex`.
+
+```sh
+eval "$(./scripts/agent-env.sh strict)"   # exports the variables for Claude Code
+claude                                    # Claude Code reads them
+codex-otel                                # runs codex with the [otel] settings as -c options
+eval "$(./scripts/agent-env.sh --off)"    # turns it off again
+```
+
+Codex has no environment variables for these settings, so use `codex-otel` instead of `codex`.
+It calls `codex`, so a `codex` shell function you already have still runs.
+If `~/.claude/settings.json` sets the same `env` keys, those values win.
+
 Open <http://localhost:3000> and sign in as `admin`.
+
+## Check that it works
+
+`./scripts/verify.sh` sends fake telemetry and checks what was stored.
+It prints one `PASS` or `FAIL` line per check and exits with 1 if any check fails.
+Run one check with `./scripts/verify.sh <ports|auth|collector|sanitize|dashboards>`.
+
+Then check with a real agent:
+
+1. Use Claude Code (or Codex) for a few minutes with telemetry on.
+   Ask it to read a file and run a command, so that tools are called.
+2. Open *GenAI Usage & Cost* (the home dashboard).
+   Tokens, estimated cost and sessions should show values.
+3. Open *GenAI Activity*. Tool calls, API latency and *Events* should show values.
+   Click a trace ID in *Recent traces* to see its spans in *Trace detail*.
+   With `PROFILE=strict`, *Sanitization leaks* should be 0 (green).
+
+Metrics reach Prometheus about once a minute, so the first values can take a minute to appear.
+Codex is not yet verified with real data.
+
+## Switch the profile
+
+1. Set `PROFILE` in `.env`.
+2. Run `docker compose up -d`. The container is recreated with the new profile.
+3. Apply the agent settings for the new profile
+   (`apply-agent-config.sh <profile>` or `agent-env.sh <profile>`).
+   `apply-agent-config.sh` stops if a key already has a different value.
+   Change those keys by hand in that case.
+
+Data stored before the switch stays as it was.
+When you move from `standard` to `strict`, delete it with
+`docker compose down -v` (this deletes all stored telemetry) and start again.
+
+## Update the image
+
+1. Set the new `grafana/otel-lgtm:<version>@sha256:<digest>` as `LGTM_IMAGE`
+   in `.env.example` and in your `.env`.
+2. Compare the bundled Collector config with `collector/base.yaml`:
+
+   ```sh
+   docker run --rm --entrypoint cat "$LGTM_IMAGE" /otel-lgtm/otelcol-config.yaml | diff - collector/base.yaml
+   ```
+
+   Exporter endpoints or component names can change between versions.
+3. Run `docker compose up -d` and `./scripts/verify.sh`.
 
 ## Collection profiles
 
@@ -72,8 +137,14 @@ See [docs/design.md](docs/design.md) for the exact attribute list.
   Check any policy that applies to the machine before you use it.
 - Binding ports to `127.0.0.1` blocks inbound access from other machines.
   It does not restrict outbound traffic from the container.
+- Only Grafana (with a password) and OTLP are published by default.
+  To call the Prometheus (9090), Loki (3100) or Tempo (3200) APIs directly, start with
+  `docker compose -f compose.yaml -f compose.debug.yaml up -d`.
+  These APIs have no authentication, so any process on this machine can read the data
+  (and Loki can delete it). Go back with `docker compose up -d --force-recreate`.
 - Enable disk encryption (FileVault) to protect the stored data.
-- To delete all stored telemetry, run `docker compose down -v`.
+- Metrics, logs and traces are kept for 30 days.
+  To delete all stored telemetry, run `docker compose down -v`.
 
 To report a vulnerability, see [SECURITY.md](SECURITY.md).
 

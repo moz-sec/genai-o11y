@@ -20,7 +20,7 @@ Read it before you make a non-trivial change.
 | `collector/` | OpenTelemetry Collector config: `base.yaml` plus `strict.yaml` / `standard.yaml` |
 | `grafana/` | Dashboard JSON and provisioning |
 | `agents/` | Per-profile settings for Claude Code (`env`) and Codex (`[otel]`) |
-| `scripts/` | `apply-agent-config.sh` and `verify.sh` |
+| `scripts/` | `apply-agent-config.sh`, `agent-env.sh` (current shell only) and `verify.sh` |
 | `docs/` | Design and other documentation. All docs live here |
 
 ## Hard rules
@@ -28,10 +28,13 @@ Read it before you make a non-trivial change.
 These protect users' data. Never break them, even if a task seems to require it.
 
 1. **Never bind to `0.0.0.0`**. Every published port must use `127.0.0.1:<host>:<container>`.
-   Do not publish 9090, 3200, or 4040.
+   `compose.yaml` must not publish 9090, 3100, 3200, or 4040 (they have no authentication).
+   Only the opt-in `compose.debug.yaml` may publish 9090, 3100, and 3200. Never publish 4040.
 2. **Pin the image**. Use `grafana/otel-lgtm:<version>@sha256:<digest>`.
    When you bump it, compare the new image's bundled `otelcol-config.yaml`
    with `collector/base.yaml`.
+   Also check that the bundled dashboards are still provisioned by
+   `grafana/conf/provisioning/dashboards/grafana-dashboards.yaml`, which `compose.yaml` overrides.
    Note the result in the change description.
 3. **The `strict` profile must not store** any of the following.
    This applies to logs, traces, and metrics (including `target_info` labels).
