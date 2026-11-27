@@ -94,7 +94,7 @@ A を選ぶ理由: コンテナが 1 つで済み、管理するイメージも�
 ```text
 genai-o11y/
 ├── compose.yaml
-├── .env.example              # PROFILE, GRAFANA_ADMIN_PASSWORD, イメージ digest など
+├── .env.example              # PROFILE, GRAFANA_ADMIN_PASSWORD
 ├── collector/
 │   ├── base.yaml             # 受信・エクスポート・共通処理（同梱設定をもとに作る）
 │   ├── strict.yaml           # 強めのサニタイズ（デフォルト）
@@ -119,8 +119,11 @@ genai-o11y/
 ├── AGENTS.md                  # コーディングエージェント向けの規約
 ├── LICENSE / SECURITY.md / CONTRIBUTING.md
 ├── README.md / README.ja.md
+├── renovate.json              # otel-lgtm の新しいイメージが出たら PR を作る（自動マージしない）
 └── .gitignore / .editorconfig / .markdownlint-cli2.jsonc
 ```
+
+イメージは `compose.yaml` にバージョンと digest で直接書く。`.env` には置かないので、更新は `git pull` だけで全員に届く。新しいバージョンは Renovate 標準の docker-compose 検出で見つけ、`compose.yaml` を書き換える PR を作る。PR は自動マージしない。同梱の Collector 設定やダッシュボードのプロビジョニングが変わっていないかを、人が確かめてからマージする（AGENTS.md のハードルール 2）。チェック項目は PR の本文に入る。公開から 3 日たったバージョンだけを対象にする。
 
 Collector の設定の組み方は 2 通りある。1 つは OTel Collector の複数 `--config` マージ機能（`base.yaml` + プロファイル）を使う方法。もう 1 つはプロファイルごとに完結したファイルを 2 つ用意し、マウント先を切り替える方法。どちらにするかは実装者が決めてよい。条件は同梱の起動スクリプトとぶつからないこと。
 

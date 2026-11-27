@@ -148,12 +148,18 @@ When you move from `standard` to `strict`, delete it with
 
 ## Update the image
 
-1. Set the new `grafana/otel-lgtm:<version>@sha256:<digest>` as `LGTM_IMAGE`
-   in `.env.example` and in your `.env`.
+The image is pinned by version and digest in `compose.yaml`.
+Renovate opens a pull request that updates it when a new `grafana/otel-lgtm` image is released.
+It is never merged automatically; the pull request lists the checks below.
+After it is merged, run `git pull` and `docker compose up -d`.
+
+To update by hand:
+
+1. Set the new `grafana/otel-lgtm:<version>@sha256:<digest>` as `image` in `compose.yaml`.
 2. Compare the bundled Collector config with `collector/base.yaml`:
 
    ```sh
-   docker run --rm --entrypoint cat "$LGTM_IMAGE" /otel-lgtm/otelcol-config.yaml | diff - collector/base.yaml
+   docker run --rm --entrypoint cat "$(docker compose config --images)" /otel-lgtm/otelcol-config.yaml | diff - collector/base.yaml
    ```
 
    Exporter endpoints or component names can change between versions.
