@@ -33,6 +33,8 @@ These protect users' data. Never break them, even if a task seems to require it.
 2. **Pin the image**. Use `grafana/otel-lgtm:<version>@sha256:<digest>`.
    When you bump it, compare the new image's bundled `otelcol-config.yaml`
    with `collector/base.yaml`.
+   Also check that the bundled dashboards are still provisioned by
+   `grafana/conf/provisioning/dashboards/grafana-dashboards.yaml`, which `compose.yaml` overrides.
    Note the result in the change description.
 3. **The `strict` profile must not store** any of the following.
    This applies to logs, traces, and metrics (including `target_info` labels).

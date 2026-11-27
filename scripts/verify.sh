@@ -191,6 +191,12 @@ check_dashboards() {
     jq -e '[.dashboard.templating.list[].name] | index("service") and index("model")' >/dev/null <<<"$dash" ||
       { fail dashboards "$uid lacks the service and model variables"; return 1; }
   done
+  # The image's bundled dashboards are overridden in compose.yaml.
+  if grafana_api GET '/api/search?type=dash-db' |
+    jq -e 'any(.[]; .title | test("RED Metrics|JVM"))' >/dev/null; then
+    fail dashboards "the bundled RED Metrics or JVM dashboards are still provisioned"
+    return 1
+  fi
   # Grafana 12+ imports the home JSON as a copy and answers with a redirect to it.
   home="$(grafana_api GET /api/dashboards/home)"
   uid="$(jq -r '.dashboard.uid // (.redirectUri // "" | capture("^/d/(?<u>[^/]+)").u) // ""' <<<"$home")"

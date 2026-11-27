@@ -26,6 +26,8 @@ services:
       - ./collector/base.yaml:/otel-lgtm/otelcol-config.yaml:ro
       - ./collector/${PROFILE:-strict}.yaml:/otel-lgtm/profile.yaml:ro
       - ./grafana/provisioning/dashboards/genai.yaml:/otel-lgtm/grafana/conf/provisioning/dashboards/genai.yaml:ro
+      # Drops the image's bundled RED Metrics and JVM Metrics dashboards.
+      - ./grafana/provisioning/dashboards/otel-lgtm-bundled.yaml:/otel-lgtm/grafana/conf/provisioning/dashboards/grafana-dashboards.yaml:ro
       - ./grafana/dashboards:/otel-lgtm/grafana/conf/provisioning/dashboards/genai:ro
 
 volumes:

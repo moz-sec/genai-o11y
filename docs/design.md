@@ -169,6 +169,7 @@ Codex CLI   ─┘        │
 
 - 匿名 Admin は無効にし、`.env` の `GRAFANA_ADMIN_PASSWORD` でログインする。これは localhost だけでも同じ Mac 上のブラウザやほかのプロセスから操作できてしまうことへの最低限の対策である。設定コストもほぼない。
 - ホームダッシュボードは Usage & Cost にする。`GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH` で JSON を指定する。Grafana 13 はこの JSON を UID `default-home-dashboard` のコピーとして取り込み、ホームからそこへリダイレクトする。コピーは起動のたびに作り直される。
+- イメージに同梱の RED Metrics と JVM Metrics のダッシュボードは、AI エージェントには関係がないので読み込まない。同梱の `grafana-dashboards.yaml` を、プロバイダが空の `grafana/provisioning/dashboards/otel-lgtm-bundled.yaml` で上書きする。イメージを更新するときは、このファイルのパスが変わっていないか確認する。
 - ダッシュボードは `genai-o11y` フォルダにプロビジョニングし、UI からは保存できないようにする（`allowUiUpdates: false`）。変えるときは `grafana/dashboards/` の JSON を直す。
 - コストの扱い: Claude は `claude_code.cost.usage` をそのまま使う。Codex は `codex.turn_cost`（`usage.estimated_usd`）が実データで取れればそれを使い、取れなければトークン数だけを表示する。料金表は持たない（保守が必要になるため）。どちらも「推定値」と表示する（サブスクリプション利用では実際の請求額と一致しないため）。
 - Codex のトークン数やコストがメトリクスとして出ていない場合は、Loki のログから集計するクエリ（LogQL の `sum_over_time` など）で代用する。Collector でログをメトリクスに変換する処理は作らない。
