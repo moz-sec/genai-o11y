@@ -102,6 +102,7 @@ genai-o11y/
 │   └── codex/{strict,standard}.toml      # [otel] ブロック
 ├── scripts/
 │   ├── apply-agent-config.sh  # バックアップしてからマージ。既定は dry-run
+│   ├── agent-env.sh           # 今のシェルだけで有効にする（ファイルは変えない）
 │   └── verify.sh              # ポートのバインドとサニタイズを確認
 ├── docs/
 │   └── design.md              # この設計書
@@ -170,6 +171,11 @@ Codex CLI   ─┘        │
   - Claude: `jq` を使い、`~/.claude/settings.json` の `env` に必要なキーだけをマージする。ほかのキーには触れない。同じキーに別の値（たとえば別のエンドポイント）が入っていたら、上書きせずに中止して差分を表示する。
   - managed settings に OTEL 関連のキーがある場合は、警告を出して中止する。対象のファイルは `/Library/Application Support/ClaudeCode/managed-settings.json` である。managed settings はユーザー設定より優先されるため、適用しても効かない。
   - Codex: `~/.codex/config.toml` に `[otel]` がなければ追記する。すでにある場合は書き換えず、差分を表示して手で直してもらう（TOML を安全にマージするための依存を増やさないため）。
+- `scripts/agent-env.sh <strict|standard>`（`--off` で解除）
+  - 設定ファイルを変えずに、今のシェルだけでテレメトリを有効にする。使い方は `eval "$(./scripts/agent-env.sh strict)"` である。
+  - Claude: テンプレートの値を `export` する。
+  - Codex: 環境変数で設定する方法がないため、`codex -c otel.<key>=<value> ... "$@"` を実行する `codex-otel` 関数を定義する。利用者が定義した `codex` のシェル関数を壊さないよう、`codex` 自体は上書きしない。
+  - 値はどちらのスクリプトも `agents/` のテンプレートから取る。永続化するか一時的にするかは利用者が選ぶ。
 - Codex の `metrics_exporter` は必ず `otlp-http` にする（デフォルトの `statsig` を避ける）。
 
 ### 5.6 データ保持
@@ -198,6 +204,7 @@ Codex CLI   ─┘        │
 - 対象は Claude Code と Codex。ダッシュボードで分かりやすく見られることが目的。
 - 目的はローカルでの可視化に絞り、特定の利用シーンは前提にしない。
 - 収集プロファイルは `strict`（強めのサニタイズ）と `standard`（プロンプトだけを削除）の 2 つにする。
+- エージェントの設定は、設定ファイルに書き込む（永続）か、今のシェルだけで有効にする（一時）かを利用者が選べるようにする。
 
 ### 設計者（Claude）の判断（ユーザーが確認する前提）
 

@@ -31,6 +31,7 @@ It shows them on Grafana dashboards running on your own machine.
 - **Safe agent setup**. A script merges the needed settings into
   `~/.claude/settings.json` and `~/.codex/config.toml`.
   It runs as a dry run by default, takes a backup, and stops on conflicts.
+  If you would rather not touch those files, turn telemetry on for one shell only.
 
 ## Requirements
 
@@ -44,10 +45,30 @@ It shows them on Grafana dashboards running on your own machine.
 ```sh
 cp .env.example .env            # set PROFILE=strict|standard and GRAFANA_ADMIN_PASSWORD
 docker compose up -d
-./scripts/apply-agent-config.sh strict          # dry run: shows the diff
-./scripts/apply-agent-config.sh strict --apply  # writes the settings
-./scripts/verify.sh                             # checks bindings and sanitization
+./scripts/verify.sh             # checks bindings and sanitization
 ```
+
+Then turn on telemetry in the agents. Pick one of the two ways.
+
+**Persistent**: write the settings to the agents' config files.
+
+```sh
+./scripts/apply-agent-config.sh strict          # dry run: shows the diff
+./scripts/apply-agent-config.sh strict --apply  # writes the settings (with a backup)
+```
+
+**This shell only**: nothing is written to `~/.claude` or `~/.codex`.
+
+```sh
+eval "$(./scripts/agent-env.sh strict)"   # exports the variables for Claude Code
+claude                                    # Claude Code reads them
+codex-otel                                # runs codex with the [otel] settings as -c options
+eval "$(./scripts/agent-env.sh --off)"    # turns it off again
+```
+
+Codex has no environment variables for these settings, so use `codex-otel` instead of `codex`.
+It calls `codex`, so a `codex` shell function you already have still runs.
+If `~/.claude/settings.json` sets the same `env` keys, those values win.
 
 Open <http://localhost:3000> and sign in as `admin`.
 

@@ -20,7 +20,7 @@ Read it before you make a non-trivial change.
 | `collector/` | OpenTelemetry Collector config: `base.yaml` plus `strict.yaml` / `standard.yaml` |
 | `grafana/` | Dashboard JSON and provisioning |
 | `agents/` | Per-profile settings for Claude Code (`env`) and Codex (`[otel]`) |
-| `scripts/` | `apply-agent-config.sh` and `verify.sh` |
+| `scripts/` | `apply-agent-config.sh`, `agent-env.sh` (current shell only) and `verify.sh` |
 | `docs/` | Design and other documentation. All docs live here |
 
 ## Hard rules

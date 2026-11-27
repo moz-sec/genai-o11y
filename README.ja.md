@@ -27,6 +27,7 @@ OpenTelemetry のメトリクス、ログ、トレースを集め、ローカル
 - 必要な設定はスクリプトでエージェントの設定ファイルに安全にマージする。
   対象は `~/.claude/settings.json` と `~/.codex/config.toml` である。デフォルトは dry-run で、書き込む前にバックアップを取り、
   既存の値とぶつかったら中止する。
+  設定ファイルを変えたくない場合は、いま使っているシェルでだけ有効にもできる。
 
 ## 必要なもの
 
@@ -40,10 +41,30 @@ OpenTelemetry のメトリクス、ログ、トレースを集め、ローカル
 ```sh
 cp .env.example .env            # PROFILE=strict|standard と GRAFANA_ADMIN_PASSWORD を設定する
 docker compose up -d
-./scripts/apply-agent-config.sh strict          # dry-run（差分を表示するだけ）
-./scripts/apply-agent-config.sh strict --apply  # 設定を書き込む
-./scripts/verify.sh                             # バインドとサニタイズを確認する
+./scripts/verify.sh             # バインドとサニタイズを確認する
 ```
+
+次に、エージェントのテレメトリを有効にします。次の 2 つの方法から選んでください。
+
+**ずっと有効にする**：エージェントの設定ファイルに書き込みます。
+
+```sh
+./scripts/apply-agent-config.sh strict          # dry-run（差分を表示するだけ）
+./scripts/apply-agent-config.sh strict --apply  # バックアップを取ってから書き込む
+```
+
+**このシェルだけで有効にする**：`~/.claude` と `~/.codex` には何も書き込みません。
+
+```sh
+eval "$(./scripts/agent-env.sh strict)"   # Claude Code 用の環境変数を設定する
+claude                                    # Claude Code はこの環境変数を読む
+codex-otel                                # [otel] の設定を -c で渡して codex を起動する
+eval "$(./scripts/agent-env.sh --off)"    # 元に戻す
+```
+
+Codex にはこれらの設定を環境変数で渡す方法がないため、`codex` の代わりに `codex-otel` を使います。
+`codex-otel` は `codex` を呼ぶので、自分で定義した `codex` のシェル関数があればそれも動きます。
+`~/.claude/settings.json` の `env` に同じキーがある場合は、そちらの値が優先されます。
 
 <http://localhost:3000> を開き、`admin` でログインします。
 
