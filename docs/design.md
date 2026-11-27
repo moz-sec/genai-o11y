@@ -110,7 +110,10 @@ genai-o11y/
 ├── scripts/
 │   ├── apply-agent-config.sh  # バックアップしてからマージ。既定は dry-run
 │   ├── agent-env.sh           # 今のシェルだけで有効にする（ファイルは変えない）
-│   └── verify.sh              # ポート、ログイン、Collector、サニタイズ、ダッシュボードを確認
+│   ├── verify.sh              # ポート、ログイン、Collector、サニタイズ、ダッシュボードを確認
+│   └── lint.sh                # shellcheck と markdownlint-cli2（フックから呼ぶ）
+├── .githooks/pre-commit       # ステージしたファイルに lint.sh を実行
+├── .claude/settings.json      # Claude Code の編集後フックで lint.sh を実行
 ├── docs/
 │   └── design.md              # この設計書
 ├── AGENTS.md                  # コーディングエージェント向けの規約

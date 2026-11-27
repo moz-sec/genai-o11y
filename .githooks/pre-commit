@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Lints the staged shell scripts and Markdown files.
+# Enable once per clone: git config core.hooksPath .githooks
+# The files are checked as they are in the working tree.
+set -euo pipefail
+
+files=()
+while IFS= read -r -d '' f; do files+=("$f"); done < <(git diff --cached --name-only --diff-filter=ACMR -z)
+((${#files[@]})) || exit 0
+exec "$(git rev-parse --show-toplevel)/scripts/lint.sh" "${files[@]}"
