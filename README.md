@@ -32,6 +32,49 @@ It shows them on Grafana dashboards running on your own machine.
   It runs as a dry run by default, takes a backup, and stops on conflicts.
   If you would rather not touch those files, turn telemetry on for one shell only.
 
+## Architecture
+
+```mermaid
+flowchart LR
+  subgraph host["Your Mac"]
+    claude["Claude Code"]
+    codex["Codex CLI"]
+    browser["Browser"]
+    subgraph lgtm["grafana/otel-lgtm container"]
+      otelcol["OpenTelemetry Collector<br/>base.yaml + profile"]
+      prom[("Prometheus<br/>metrics")]
+      loki[("Loki<br/>logs / events")]
+      tempo[("Tempo<br/>traces")]
+      grafana["Grafana<br/>dashboards"]
+    end
+    vol[("Docker volume<br/>genai-o11y-data")]
+  end
+
+  claude -- "OTLP/HTTP<br/>127.0.0.1:4318" --> otelcol
+  codex -- "OTLP/HTTP<br/>127.0.0.1:4318" --> otelcol
+  otelcol --> prom
+  otelcol --> loki
+  otelcol --> tempo
+  prom --> grafana
+  loki --> grafana
+  tempo --> grafana
+  browser -- "127.0.0.1:3000<br/>password login" --> grafana
+  prom -.- vol
+  loki -.- vol
+  tempo -.- vol
+```
+
+- The agents send metrics, logs (events) and traces over OTLP to `127.0.0.1:4318`
+  (OTLP/gRPC on `4317` is also open).
+- The Collector removes data according to the profile, then writes to Prometheus, Loki and Tempo.
+  Its config is `collector/base.yaml` merged with `collector/<profile>.yaml`.
+- Grafana reads all three and shows the provisioned dashboards from `grafana/dashboards/`.
+- Data is stored in the `genai-o11y-data` volume for 30 days.
+- Only Grafana and OTLP are published. The Prometheus, Loki and Tempo APIs stay inside the container
+  unless you start with `compose.debug.yaml` (see [Security notes](#security-notes)).
+
+See [docs/design.md](docs/design.md) for the details and the reasons behind them.
+
 ## Requirements
 
 - macOS on Apple silicon
