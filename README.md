@@ -21,7 +21,8 @@ It shows them on Grafana dashboards running on your own machine.
   It also removes emails, account IDs and host names.
   The `standard` profile removes only prompts and keeps more detail for analysis.
 - **Ready-made dashboards**. *Usage & Cost* shows tokens and estimated cost,
-  sessions, active time and lines of code.
+  sessions, prompts, API requests and errors, active time, commits, lines of code,
+  the edit accept rate, a per-model breakdown and the most expensive sessions.
   *Activity* shows tool calls and errors, latency, the event log,
   traces (click one to see its spans), and a sanitization-leak check.
   Codex is not yet verified with real data: *Usage & Cost* shows Claude Code only,

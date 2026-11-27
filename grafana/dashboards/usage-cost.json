@@ -112,20 +112,20 @@
       "gridPos": {
         "x": 0,
         "y": 1,
-        "w": 4,
+        "w": 3,
         "h": 4
       },
       "targets": [
         {
           "expr": "sum(increase(claude_code_cost_usage_USD_total{service_name=~\"$service\", model=~\"$model\"}[$__range] anchored))",
           "legendFormat": "__auto",
-          "range": false,
-          "instant": true,
           "refId": "A",
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
-          }
+          },
+          "range": false,
+          "instant": true
         }
       ],
       "fieldConfig": {
@@ -134,7 +134,6 @@
         },
         "overrides": []
       },
-      "description": "Estimate reported by Claude Code. Not your bill.",
       "options": {
         "reduceOptions": {
           "calcs": [
@@ -146,7 +145,8 @@
         "colorMode": "none",
         "graphMode": "none",
         "textMode": "auto"
-      }
+      },
+      "description": "Estimate reported by Claude Code. Not your bill."
     },
     {
       "id": 3,
@@ -157,22 +157,22 @@
         "uid": "prometheus"
       },
       "gridPos": {
-        "x": 4,
+        "x": 3,
         "y": 1,
-        "w": 4,
+        "w": 3,
         "h": 4
       },
       "targets": [
         {
           "expr": "sum(increase(claude_code_token_usage_tokens_total{service_name=~\"$service\", model=~\"$model\"}[$__range] anchored))",
           "legendFormat": "__auto",
-          "range": false,
-          "instant": true,
           "refId": "A",
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
-          }
+          },
+          "range": false,
+          "instant": true
         }
       ],
       "fieldConfig": {
@@ -203,22 +203,22 @@
         "uid": "prometheus"
       },
       "gridPos": {
-        "x": 8,
+        "x": 6,
         "y": 1,
-        "w": 4,
+        "w": 3,
         "h": 4
       },
       "targets": [
         {
           "expr": "count(count by (session_id) (last_over_time(claude_code_session_count_total{service_name=~\"$service\"}[$__range])))",
           "legendFormat": "__auto",
-          "range": false,
-          "instant": true,
           "refId": "A",
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
-          }
+          },
+          "range": false,
+          "instant": true
         }
       ],
       "fieldConfig": {
@@ -227,7 +227,6 @@
         },
         "overrides": []
       },
-      "description": "Distinct session IDs seen in the selected range.",
       "options": {
         "reduceOptions": {
           "calcs": [
@@ -239,42 +238,41 @@
         "colorMode": "none",
         "graphMode": "none",
         "textMode": "auto"
-      }
+      },
+      "description": "Distinct session IDs seen in the selected range."
     },
     {
       "id": 5,
       "type": "stat",
-      "title": "Active time",
+      "title": "User prompts",
       "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
+        "type": "loki",
+        "uid": "loki"
       },
       "gridPos": {
-        "x": 12,
+        "x": 9,
         "y": 1,
-        "w": 4,
+        "w": 3,
         "h": 4
       },
       "targets": [
         {
-          "expr": "sum by (type) (increase(claude_code_active_time_seconds_total{service_name=~\"$service\"}[$__range] anchored))",
-          "legendFormat": "{{type}}",
-          "range": false,
-          "instant": true,
+          "expr": "sum(count_over_time({service_name=~\"$service\"} | event_name=\"user_prompt\" [$__range])) or vector(0)",
+          "legendFormat": "__auto",
           "refId": "A",
           "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          }
+            "type": "loki",
+            "uid": "loki"
+          },
+          "queryType": "instant"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "s"
+          "unit": "short"
         },
         "overrides": []
       },
-      "description": "user: time you typed; cli: time the agent worked.",
       "options": {
         "reduceOptions": {
           "calcs": [
@@ -291,28 +289,27 @@
     {
       "id": 6,
       "type": "stat",
-      "title": "Lines of code",
+      "title": "API requests",
       "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
+        "type": "loki",
+        "uid": "loki"
       },
       "gridPos": {
-        "x": 16,
+        "x": 12,
         "y": 1,
-        "w": 4,
+        "w": 3,
         "h": 4
       },
       "targets": [
         {
-          "expr": "sum by (type) (increase(claude_code_lines_of_code_count_total{service_name=~\"$service\"}[$__range] anchored))",
-          "legendFormat": "{{type}}",
-          "range": false,
-          "instant": true,
+          "expr": "sum(count_over_time({service_name=~\"$service\"} | event_name=\"api_request\" | model=~\"$model\" [$__range])) or vector(0)",
+          "legendFormat": "__auto",
           "refId": "A",
           "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          }
+            "type": "loki",
+            "uid": "loki"
+          },
+          "queryType": "instant"
         }
       ],
       "fieldConfig": {
@@ -321,7 +318,6 @@
         },
         "overrides": []
       },
-      "description": "Lines added and removed by the agent.",
       "options": {
         "reduceOptions": {
           "calcs": [
@@ -338,28 +334,27 @@
     {
       "id": 7,
       "type": "stat",
-      "title": "Commits",
+      "title": "API errors",
       "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
+        "type": "loki",
+        "uid": "loki"
       },
       "gridPos": {
-        "x": 20,
+        "x": 15,
         "y": 1,
-        "w": 4,
+        "w": 3,
         "h": 4
       },
       "targets": [
         {
-          "expr": "sum(increase(claude_code_commit_count_total{service_name=~\"$service\"}[$__range] anchored))",
+          "expr": "sum(count_over_time({service_name=~\"$service\"} | event_name=\"api_error\" [$__range])) or vector(0)",
           "legendFormat": "__auto",
-          "range": false,
-          "instant": true,
           "refId": "A",
           "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          }
+            "type": "loki",
+            "uid": "loki"
+          },
+          "queryType": "instant"
         }
       ],
       "fieldConfig": {
@@ -383,8 +378,101 @@
     },
     {
       "id": 8,
+      "type": "stat",
+      "title": "Active time",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 1,
+        "w": 3,
+        "h": 4
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(claude_code_active_time_seconds_total{service_name=~\"$service\"}[$__range] anchored))",
+          "legendFormat": "__auto",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "range": false,
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "none",
+        "graphMode": "none",
+        "textMode": "auto"
+      },
+      "description": "user (time you typed) + cli (time the agent worked). See the breakdown below."
+    },
+    {
+      "id": 9,
+      "type": "stat",
+      "title": "Commits",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 21,
+        "y": 1,
+        "w": 3,
+        "h": 4
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(claude_code_commit_count_total{service_name=~\"$service\"}[$__range] anchored))",
+          "legendFormat": "__auto",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "range": false,
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "none",
+        "graphMode": "none",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 10,
       "type": "row",
-      "title": "Tokens",
+      "title": "Cost & token trends",
       "collapsed": false,
       "gridPos": {
         "x": 0,
@@ -395,128 +483,7 @@
       "panels": []
     },
     {
-      "id": 9,
-      "type": "timeseries",
-      "title": "Tokens by type",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "x": 0,
-        "y": 6,
-        "w": 12,
-        "h": 9
-      },
-      "targets": [
-        {
-          "expr": "sum by (type) (increase(claude_code_token_usage_tokens_total{service_name=~\"$service\", model=~\"$model\"}[$__interval] anchored))",
-          "legendFormat": "{{type}}",
-          "range": true,
-          "instant": false,
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          }
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "custom": {
-            "drawStyle": "bars",
-            "stacking": {
-              "mode": "normal"
-            },
-            "fillOpacity": 80
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "table",
-          "placement": "right",
-          "calcs": [
-            "sum"
-          ]
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      }
-    },
-    {
-      "id": 10,
-      "type": "timeseries",
-      "title": "Tokens by model",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "x": 12,
-        "y": 6,
-        "w": 12,
-        "h": 9
-      },
-      "targets": [
-        {
-          "expr": "sum by (model) (increase(claude_code_token_usage_tokens_total{service_name=~\"$service\", model=~\"$model\"}[$__interval] anchored))",
-          "legendFormat": "{{model}}",
-          "range": true,
-          "instant": false,
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          }
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "custom": {
-            "drawStyle": "bars",
-            "stacking": {
-              "mode": "normal"
-            },
-            "fillOpacity": 80
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "table",
-          "placement": "right",
-          "calcs": [
-            "sum"
-          ]
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      }
-    },
-    {
       "id": 11,
-      "type": "row",
-      "title": "Cost (estimated)",
-      "collapsed": false,
-      "gridPos": {
-        "x": 0,
-        "y": 15,
-        "w": 24,
-        "h": 1
-      },
-      "panels": []
-    },
-    {
-      "id": 12,
       "type": "timeseries",
       "title": "Estimated cost by model",
       "datasource": {
@@ -525,21 +492,21 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 16,
+        "y": 6,
         "w": 12,
-        "h": 9
+        "h": 8
       },
       "targets": [
         {
           "expr": "sum by (model) (increase(claude_code_cost_usage_USD_total{service_name=~\"$service\", model=~\"$model\"}[$__interval] anchored))",
           "legendFormat": "{{model}}",
-          "range": true,
-          "instant": false,
           "refId": "A",
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
-          }
+          },
+          "range": true,
+          "instant": false
         }
       ],
       "fieldConfig": {
@@ -555,7 +522,61 @@
         },
         "overrides": []
       },
-      "description": "Estimate reported by Claude Code. Not your bill.",
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "sum"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "description": "Estimate reported by Claude Code. Not your bill."
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Tokens by type",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 6,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "sum by (type) (increase(claude_code_token_usage_tokens_total{service_name=~\"$service\", model=~\"$model\"}[$__interval] anchored))",
+          "legendFormat": "{{type}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "range": true,
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "bars",
+            "stacking": {
+              "mode": "normal"
+            },
+            "fillOpacity": 80
+          }
+        },
+        "overrides": []
+      },
       "options": {
         "legend": {
           "displayMode": "table",
@@ -572,34 +593,384 @@
     },
     {
       "id": 13,
-      "type": "timeseries",
-      "title": "Estimated cost by service",
+      "type": "row",
+      "title": "Model breakdown (selected time range)",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 14,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 14,
+      "type": "piechart",
+      "title": "Tokens by model",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
       "gridPos": {
-        "x": 12,
-        "y": 16,
-        "w": 12,
-        "h": 9
+        "x": 0,
+        "y": 15,
+        "w": 8,
+        "h": 8
       },
       "targets": [
         {
-          "expr": "sum by (service_name) (increase(claude_code_cost_usage_USD_total{service_name=~\"$service\", model=~\"$model\"}[$__interval] anchored))",
-          "legendFormat": "{{service_name}}",
-          "range": true,
-          "instant": false,
+          "expr": "sum by (model) (increase(claude_code_token_usage_tokens_total{service_name=~\"$service\", model=~\"$model\"}[$__range] anchored))",
+          "legendFormat": "{{model}}",
           "refId": "A",
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
-          }
+          },
+          "range": false,
+          "instant": true
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "currencyUSD",
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "pieType": "donut",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "values": [
+            "value",
+            "percent"
+          ]
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      }
+    },
+    {
+      "id": 15,
+      "type": "piechart",
+      "title": "Estimated cost by model",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 15,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "sum by (model) (increase(claude_code_cost_usage_USD_total{service_name=~\"$service\", model=~\"$model\"}[$__range] anchored))",
+          "legendFormat": "{{model}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "range": false,
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "options": {
+        "pieType": "donut",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "values": [
+            "value",
+            "percent"
+          ]
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "description": "Estimate reported by Claude Code. Not your bill."
+    },
+    {
+      "id": 16,
+      "type": "piechart",
+      "title": "API requests by model",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 15,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "sum by (model) (count_over_time({service_name=~\"$service\"} | event_name=\"api_request\" | model=~\"$model\" [$__range]))",
+          "legendFormat": "{{model}}",
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "queryType": "instant"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "pieType": "donut",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "values": [
+            "value",
+            "percent"
+          ]
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      }
+    },
+    {
+      "id": 17,
+      "type": "row",
+      "title": "Most expensive sessions",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 23,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 18,
+      "type": "table",
+      "title": "Most expensive sessions",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Estimate reported by Claude Code. Not your bill. Prompt text is never stored, so sessions are listed by ID.",
+      "gridPos": {
+        "x": 0,
+        "y": 24,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "sum by (session_id) (increase(claude_code_cost_usage_USD_total{service_name=~\"$service\", model=~\"$model\"}[$__range] anchored))",
+          "legendFormat": "__auto",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "range": false,
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "expr": "sum by (session_id) (increase(claude_code_token_usage_tokens_total{service_name=~\"$service\", model=~\"$model\"}[$__range] anchored))",
+          "legendFormat": "__auto",
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "range": false,
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "expr": "sum by (session_id) (increase(claude_code_active_time_seconds_total{service_name=~\"$service\"}[$__range] anchored))",
+          "legendFormat": "__auto",
+          "refId": "C",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "range": false,
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "renameByName": {
+              "session_id": "Session",
+              "Value #A": "Estimated cost",
+              "Value #B": "Tokens",
+              "Value #C": "Active time"
+            },
+            "indexByName": {
+              "session_id": 0,
+              "Value #A": 1,
+              "Value #B": 2,
+              "Value #C": 3
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Estimated cost",
+                "desc": true
+              }
+            ]
+          }
+        },
+        {
+          "id": "limit",
+          "options": {
+            "limitField": 20
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Estimated cost"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Tokens"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Active time"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      }
+    },
+    {
+      "id": 19,
+      "type": "row",
+      "title": "Productivity",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 32,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 20,
+      "type": "timeseries",
+      "title": "Commits",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 33,
+        "w": 6,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(claude_code_commit_count_total{service_name=~\"$service\"}[$__interval] anchored))",
+          "legendFormat": "commits",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "range": true,
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
           "custom": {
             "drawStyle": "bars",
             "stacking": {
@@ -610,7 +981,6 @@
         },
         "overrides": []
       },
-      "description": "Estimate reported by Claude Code. Not your bill.",
       "options": {
         "legend": {
           "displayMode": "table",
@@ -624,6 +994,286 @@
           "sort": "desc"
         }
       }
+    },
+    {
+      "id": 21,
+      "type": "timeseries",
+      "title": "User prompts",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 33,
+        "w": 6,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service_name=~\"$service\"} | event_name=\"user_prompt\" [$__auto]))",
+          "legendFormat": "prompts",
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "queryType": "range"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "bars",
+            "stacking": {
+              "mode": "normal"
+            },
+            "fillOpacity": 80
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "sum"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 22,
+      "type": "timeseries",
+      "title": "Lines of code",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 33,
+        "w": 6,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "sum by (type) (increase(claude_code_lines_of_code_count_total{service_name=~\"$service\"}[$__interval] anchored))",
+          "legendFormat": "{{type}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "range": true,
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "bars",
+            "stacking": {
+              "mode": "normal"
+            },
+            "fillOpacity": 80
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "sum"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "description": "Lines added and removed by the agent."
+    },
+    {
+      "id": 23,
+      "type": "stat",
+      "title": "Code edit accept rate",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 33,
+        "w": 6,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service_name=~\"$service\"} | event_name=\"tool_decision\" | tool_name=~\"Edit|Write|MultiEdit|NotebookEdit\" | decision=\"accept\" [$__range])) / sum(count_over_time({service_name=~\"$service\"} | event_name=\"tool_decision\" | tool_name=~\"Edit|Write|MultiEdit|NotebookEdit\" [$__range]))",
+          "legendFormat": "__auto",
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "queryType": "instant"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "none",
+        "graphMode": "none",
+        "textMode": "auto"
+      },
+      "description": "Share of Edit, Write, MultiEdit, NotebookEdit tool decisions that were accepted."
+    },
+    {
+      "id": 24,
+      "type": "row",
+      "title": "Sessions & activity",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 41,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 25,
+      "type": "timeseries",
+      "title": "Sessions",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 42,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "count(count by (session_id) (last_over_time(claude_code_session_count_total{service_name=~\"$service\"}[$__interval])))",
+          "legendFormat": "sessions",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "range": true,
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "bars",
+            "stacking": {
+              "mode": "normal"
+            },
+            "fillOpacity": 80
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "sum"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "description": "Distinct session IDs seen in each interval."
+    },
+    {
+      "id": 26,
+      "type": "timeseries",
+      "title": "Active time",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 42,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "sum by (type) (increase(claude_code_active_time_seconds_total{service_name=~\"$service\"}[$__interval] anchored))",
+          "legendFormat": "{{type}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "range": true,
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "bars",
+            "stacking": {
+              "mode": "normal"
+            },
+            "fillOpacity": 80
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "sum"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "description": "user: time you typed; cli: time the agent worked."
     }
   ]
 }
