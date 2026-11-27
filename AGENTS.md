@@ -20,7 +20,8 @@ Read it before you make a non-trivial change.
 | `collector/` | OpenTelemetry Collector config: `base.yaml` plus `strict.yaml` / `standard.yaml` |
 | `grafana/` | Dashboard JSON and provisioning |
 | `agents/` | Per-profile settings for Claude Code (`env`) and Codex (`[otel]`) |
-| `scripts/` | `apply-agent-config.sh`, `agent-env.sh` (current shell only) and `verify.sh` |
+| `scripts/` | `apply-agent-config.sh`, `agent-env.sh` (current shell only), `verify.sh` and `lint.sh` |
+| `.githooks/` | pre-commit hook that runs `scripts/lint.sh` (enable with `git config core.hooksPath .githooks`) |
 | `docs/` | Design and other documentation. All docs live here |
 
 ## Hard rules
@@ -59,6 +60,8 @@ These protect users' data. Never break them, even if a task seems to require it.
 - `./scripts/verify.sh` passes for the `strict` profile.
   If you changed sanitization, also add a case for the new attribute to `verify.sh`.
 - Markdown passes `markdownlint-cli2` with `.markdownlint-cli2.jsonc`.
+- `./scripts/lint.sh` passes. It runs `shellcheck` and `markdownlint-cli2`.
+  Claude Code runs it after each edit through `.claude/settings.json`; other agents should run it themselves.
 - If you changed behavior, update these files in the same change:
   - `docs/design.md`
   - both READMEs (`README.md` and `README.ja.md`)

@@ -23,7 +23,13 @@ Requirements:
 cp .env.example .env
 docker compose up -d
 ./scripts/verify.sh
+git config core.hooksPath .githooks
 ```
+
+The last command turns on the pre-commit hook in `.githooks/`.
+It runs `scripts/lint.sh` on the staged files: `shellcheck` for shell scripts and `markdownlint-cli2` for Markdown.
+Claude Code runs the same script after each file edit (see `.claude/settings.json`).
+Run `./scripts/lint.sh` with no arguments to lint every tracked file.
 
 ## Pull requests
 
@@ -33,8 +39,7 @@ docker compose up -d
 - Make sure these pass:
   - `docker compose config`
   - `./scripts/verify.sh` (with `PROFILE=strict`)
-  - `shellcheck scripts/*.sh`
-  - `markdownlint-cli2 "**/*.md"`
+  - `./scripts/lint.sh` (`shellcheck` and `markdownlint-cli2`)
 - If you change behavior, update `docs/design.md`, `README.md`, and `README.ja.md`.
 - Never include real telemetry, prompts, emails or account IDs in issues, pull requests or test data.
   Use fake values such as `user@example.com`.
