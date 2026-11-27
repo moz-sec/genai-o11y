@@ -105,7 +105,7 @@ genai-o11y/
 │   └── verify.sh              # ポートのバインドとサニタイズを確認
 ├── docs/
 │   └── design.md              # この設計書
-├── AGENTS.md / CLAUDE.md      # コーディングエージェント向けの規約
+├── AGENTS.md                  # コーディングエージェント向けの規約
 ├── LICENSE / SECURITY.md / CONTRIBUTING.md
 ├── README.md / README.ja.md
 └── .gitignore / .editorconfig / .markdownlint-cli2.jsonc
