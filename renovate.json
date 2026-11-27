@@ -1,0 +1,22 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "labels": [
+    "dependencies"
+  ],
+  "packageRules": [
+    {
+      "description": "Image bumps need the manual checks in AGENTS.md hard rule 2; never automerge",
+      "matchDepNames": [
+        "grafana/otel-lgtm"
+      ],
+      "automerge": false,
+      "minimumReleaseAge": "3 days",
+      "prBodyNotes": [
+        "**Before merging (AGENTS.md hard rule 2):**\n\n- [ ] Compare the bundled Collector config with `collector/base.yaml`: `docker run --rm --entrypoint cat \"$(docker compose config --images)\" /otel-lgtm/otelcol-config.yaml | diff - collector/base.yaml`\n- [ ] Confirm the bundled dashboards are still provisioned by `/otel-lgtm/grafana/conf/provisioning/dashboards/grafana-dashboards.yaml`\n- [ ] `docker compose up -d` and `PROFILE=strict ./scripts/verify.sh` pass\n- [ ] Update the version in `collector/base.yaml` (first line) and `docs/design.md` §3\n- [ ] Note the result of these checks in this PR"
+      ]
+    }
+  ]
+}

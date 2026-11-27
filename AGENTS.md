@@ -15,8 +15,9 @@ Read it before you make a non-trivial change.
 
 | Path | Purpose |
 | --- | --- |
-| `compose.yaml` | The only container definition |
-| `.env.example` | Profile selection, Grafana admin password, image digest |
+| `compose.yaml` | The only container definition. The image is pinned here |
+| `.env.example` | Profile selection and Grafana admin password |
+| `renovate.json` | Renovate opens a PR when a new `grafana/otel-lgtm` image is released (never automerged) |
 | `collector/` | OpenTelemetry Collector config: `base.yaml` plus `strict.yaml` / `standard.yaml` |
 | `grafana/` | Dashboard JSON and provisioning |
 | `agents/` | Per-profile settings for Claude Code (`env`) and Codex (`[otel]`) |

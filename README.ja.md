@@ -142,12 +142,18 @@ Codex は実データでの確認がまだです。
 
 ## イメージの更新
 
-1. 新しい `grafana/otel-lgtm:<version>@sha256:<digest>` を、
-   `.env.example` と自分の `.env` の `LGTM_IMAGE` に設定します。
+イメージは `compose.yaml` にバージョンと digest で固定しています。
+新しい `grafana/otel-lgtm` のイメージが出ると、Renovate がこれを更新する PR を作ります。
+この PR は自動ではマージしません。PR の本文に、次の手順と同じ確認項目が入ります。
+マージされたら、`git pull` して `docker compose up -d` を実行してください。
+
+手で更新する場合は次のとおりです。
+
+1. 新しい `grafana/otel-lgtm:<version>@sha256:<digest>` を、`compose.yaml` の `image` に設定します。
 2. 同梱の Collector の設定と `collector/base.yaml` を比べます。
 
    ```sh
-   docker run --rm --entrypoint cat "$LGTM_IMAGE" /otel-lgtm/otelcol-config.yaml | diff - collector/base.yaml
+   docker run --rm --entrypoint cat "$(docker compose config --images)" /otel-lgtm/otelcol-config.yaml | diff - collector/base.yaml
    ```
 
    バージョンによって、exporter のエンドポイントやコンポーネントの名前が変わることがあります。

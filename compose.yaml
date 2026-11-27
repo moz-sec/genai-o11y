@@ -5,7 +5,9 @@ name: genai-o11y
 
 services:
   lgtm:
-    image: ${LGTM_IMAGE:?set LGTM_IMAGE in .env}
+    # Pinned by version and digest. Renovate opens a PR for new releases; before merging,
+    # compare the bundled otelcol-config.yaml with collector/base.yaml (AGENTS.md hard rule 2).
+    image: grafana/otel-lgtm:0.41.1@sha256:1b852b77d7bcadb7699bfe7c78a51d059dff85168de674728cf7abf4474645e5
     restart: unless-stopped
     ports:
       - "127.0.0.1:3000:3000" # Grafana
