@@ -1,0 +1,96 @@
+{
+  "resourceMetrics": [
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "service.name",
+            "value": {
+              "stringValue": "claude-code"
+            }
+          },
+          {
+            "key": "host.name",
+            "value": {
+              "stringValue": "test-host"
+            }
+          },
+          {
+            "key": "host.id",
+            "value": {
+              "stringValue": "test-host-id"
+            }
+          },
+          {
+            "key": "user.email",
+            "value": {
+              "stringValue": "user@example.com"
+            }
+          },
+          {
+            "key": "os.type",
+            "value": {
+              "stringValue": "darwin"
+            }
+          }
+        ]
+      },
+      "scopeMetrics": [
+        {
+          "scope": {
+            "name": "genai-o11y-fixture"
+          },
+          "metrics": [
+            {
+              "name": "claude_code.token.usage",
+              "unit": "tokens",
+              "sum": {
+                "aggregationTemporality": 2,
+                "isMonotonic": true,
+                "dataPoints": [
+                  {
+                    "startTimeUnixNano": "__START_NS__",
+                    "timeUnixNano": "__NOW_NS__",
+                    "asDouble": 42,
+                    "attributes": [
+                      {
+                        "key": "type",
+                        "value": {
+                          "stringValue": "input"
+                        }
+                      },
+                      {
+                        "key": "model",
+                        "value": {
+                          "stringValue": "fake-model"
+                        }
+                      },
+                      {
+                        "key": "user.email",
+                        "value": {
+                          "stringValue": "user@example.com"
+                        }
+                      },
+                      {
+                        "key": "user.account_uuid",
+                        "value": {
+                          "stringValue": "00000000-0000-0000-0000-000000000000"
+                        }
+                      },
+                      {
+                        "key": "marker",
+                        "value": {
+                          "stringValue": "__RUN_ID__"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

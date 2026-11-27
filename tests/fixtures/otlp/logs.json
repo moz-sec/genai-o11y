@@ -1,0 +1,436 @@
+{
+  "resourceLogs": [
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "service.name",
+            "value": {
+              "stringValue": "claude-code"
+            }
+          },
+          {
+            "key": "host.name",
+            "value": {
+              "stringValue": "test-host"
+            }
+          },
+          {
+            "key": "host.id",
+            "value": {
+              "stringValue": "test-host-id"
+            }
+          },
+          {
+            "key": "user.email",
+            "value": {
+              "stringValue": "user@example.com"
+            }
+          },
+          {
+            "key": "os.type",
+            "value": {
+              "stringValue": "darwin"
+            }
+          }
+        ]
+      },
+      "scopeLogs": [
+        {
+          "scope": {
+            "name": "genai-o11y-fixture"
+          },
+          "logRecords": [
+            {
+              "timeUnixNano": "__NOW_NS__",
+              "observedTimeUnixNano": "__NOW_NS__",
+              "severityText": "INFO",
+              "body": {
+                "stringValue": "claude_code.user_prompt"
+              },
+              "attributes": [
+                {
+                  "key": "event.name",
+                  "value": {
+                    "stringValue": "user_prompt"
+                  }
+                },
+                {
+                  "key": "prompt",
+                  "value": {
+                    "stringValue": "fake prompt from genai-o11y fixture"
+                  }
+                },
+                {
+                  "key": "prompt_text",
+                  "value": {
+                    "stringValue": "fake prompt text"
+                  }
+                },
+                {
+                  "key": "prompt_length",
+                  "value": {
+                    "intValue": "33"
+                  }
+                },
+                {
+                  "key": "user.account_uuid",
+                  "value": {
+                    "stringValue": "00000000-0000-0000-0000-000000000000"
+                  }
+                },
+                {
+                  "key": "organization.id",
+                  "value": {
+                    "stringValue": "00000000-0000-0000-0000-000000000000"
+                  }
+                },
+                {
+                  "key": "user.mail_address",
+                  "value": {
+                    "stringValue": "user@example.com"
+                  }
+                },
+                {
+                  "key": "marker",
+                  "value": {
+                    "stringValue": "__RUN_ID__"
+                  }
+                }
+              ]
+            },
+            {
+              "timeUnixNano": "__NOW_NS__",
+              "observedTimeUnixNano": "__NOW_NS__",
+              "severityText": "INFO",
+              "body": {
+                "stringValue": "claude_code.tool_result"
+              },
+              "attributes": [
+                {
+                  "key": "event.name",
+                  "value": {
+                    "stringValue": "tool_result"
+                  }
+                },
+                {
+                  "key": "tool_name",
+                  "value": {
+                    "stringValue": "Bash"
+                  }
+                },
+                {
+                  "key": "success",
+                  "value": {
+                    "stringValue": "false"
+                  }
+                },
+                {
+                  "key": "tool_parameters",
+                  "value": {
+                    "stringValue": "{\"command\":\"echo fake\"}"
+                  }
+                },
+                {
+                  "key": "tool_input",
+                  "value": {
+                    "stringValue": "{\"command\":\"echo fake\"}"
+                  }
+                },
+                {
+                  "key": "error",
+                  "value": {
+                    "stringValue": "fake error body for user@example.com"
+                  }
+                },
+                {
+                  "key": "error_type",
+                  "value": {
+                    "stringValue": "fake_error"
+                  }
+                },
+                {
+                  "key": "user.account_uuid",
+                  "value": {
+                    "stringValue": "00000000-0000-0000-0000-000000000000"
+                  }
+                },
+                {
+                  "key": "organization.id",
+                  "value": {
+                    "stringValue": "00000000-0000-0000-0000-000000000000"
+                  }
+                },
+                {
+                  "key": "user.mail_address",
+                  "value": {
+                    "stringValue": "user@example.com"
+                  }
+                },
+                {
+                  "key": "marker",
+                  "value": {
+                    "stringValue": "__RUN_ID__"
+                  }
+                }
+              ]
+            },
+            {
+              "timeUnixNano": "__NOW_NS__",
+              "observedTimeUnixNano": "__NOW_NS__",
+              "severityText": "INFO",
+              "body": {
+                "stringValue": "claude_code.api_error"
+              },
+              "attributes": [
+                {
+                  "key": "event.name",
+                  "value": {
+                    "stringValue": "api_error"
+                  }
+                },
+                {
+                  "key": "model",
+                  "value": {
+                    "stringValue": "fake-model"
+                  }
+                },
+                {
+                  "key": "error",
+                  "value": {
+                    "stringValue": "fake api error body"
+                  }
+                },
+                {
+                  "key": "status_code",
+                  "value": {
+                    "intValue": "500"
+                  }
+                },
+                {
+                  "key": "user.account_uuid",
+                  "value": {
+                    "stringValue": "00000000-0000-0000-0000-000000000000"
+                  }
+                },
+                {
+                  "key": "organization.id",
+                  "value": {
+                    "stringValue": "00000000-0000-0000-0000-000000000000"
+                  }
+                },
+                {
+                  "key": "user.mail_address",
+                  "value": {
+                    "stringValue": "user@example.com"
+                  }
+                },
+                {
+                  "key": "marker",
+                  "value": {
+                    "stringValue": "__RUN_ID__"
+                  }
+                }
+              ]
+            },
+            {
+              "timeUnixNano": "__NOW_NS__",
+              "observedTimeUnixNano": "__NOW_NS__",
+              "severityText": "INFO",
+              "body": {
+                "stringValue": "claude_code.api_request_body"
+              },
+              "attributes": [
+                {
+                  "key": "event.name",
+                  "value": {
+                    "stringValue": "api_request_body"
+                  }
+                },
+                {
+                  "key": "body",
+                  "value": {
+                    "stringValue": "{\"messages\":[{\"role\":\"user\",\"content\":\"fake prompt\"}]}"
+                  }
+                },
+                {
+                  "key": "user.account_uuid",
+                  "value": {
+                    "stringValue": "00000000-0000-0000-0000-000000000000"
+                  }
+                },
+                {
+                  "key": "organization.id",
+                  "value": {
+                    "stringValue": "00000000-0000-0000-0000-000000000000"
+                  }
+                },
+                {
+                  "key": "user.mail_address",
+                  "value": {
+                    "stringValue": "user@example.com"
+                  }
+                },
+                {
+                  "key": "marker",
+                  "value": {
+                    "stringValue": "__RUN_ID__"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "service.name",
+            "value": {
+              "stringValue": "codex"
+            }
+          },
+          {
+            "key": "host.name",
+            "value": {
+              "stringValue": "test-host"
+            }
+          },
+          {
+            "key": "host.id",
+            "value": {
+              "stringValue": "test-host-id"
+            }
+          },
+          {
+            "key": "user.email",
+            "value": {
+              "stringValue": "user@example.com"
+            }
+          },
+          {
+            "key": "os.type",
+            "value": {
+              "stringValue": "darwin"
+            }
+          }
+        ]
+      },
+      "scopeLogs": [
+        {
+          "scope": {
+            "name": "genai-o11y-fixture"
+          },
+          "logRecords": [
+            {
+              "timeUnixNano": "__NOW_NS__",
+              "observedTimeUnixNano": "__NOW_NS__",
+              "severityText": "INFO",
+              "body": {
+                "stringValue": "codex.tool_result"
+              },
+              "attributes": [
+                {
+                  "key": "event.name",
+                  "value": {
+                    "stringValue": "codex.tool_result"
+                  }
+                },
+                {
+                  "key": "tool_name",
+                  "value": {
+                    "stringValue": "shell"
+                  }
+                },
+                {
+                  "key": "arguments",
+                  "value": {
+                    "stringValue": "{\"cmd\":\"echo fake\"}"
+                  }
+                },
+                {
+                  "key": "output",
+                  "value": {
+                    "stringValue": "fake output"
+                  }
+                },
+                {
+                  "key": "user.account_uuid",
+                  "value": {
+                    "stringValue": "00000000-0000-0000-0000-000000000000"
+                  }
+                },
+                {
+                  "key": "organization.id",
+                  "value": {
+                    "stringValue": "00000000-0000-0000-0000-000000000000"
+                  }
+                },
+                {
+                  "key": "user.mail_address",
+                  "value": {
+                    "stringValue": "user@example.com"
+                  }
+                },
+                {
+                  "key": "marker",
+                  "value": {
+                    "stringValue": "__RUN_ID__"
+                  }
+                }
+              ]
+            },
+            {
+              "timeUnixNano": "__NOW_NS__",
+              "observedTimeUnixNano": "__NOW_NS__",
+              "severityText": "INFO",
+              "body": {
+                "stringValue": "codex.user_prompt"
+              },
+              "attributes": [
+                {
+                  "key": "event.name",
+                  "value": {
+                    "stringValue": "codex.user_prompt"
+                  }
+                },
+                {
+                  "key": "prompt",
+                  "value": {
+                    "stringValue": "fake codex prompt"
+                  }
+                },
+                {
+                  "key": "user.account_uuid",
+                  "value": {
+                    "stringValue": "00000000-0000-0000-0000-000000000000"
+                  }
+                },
+                {
+                  "key": "organization.id",
+                  "value": {
+                    "stringValue": "00000000-0000-0000-0000-000000000000"
+                  }
+                },
+                {
+                  "key": "user.mail_address",
+                  "value": {
+                    "stringValue": "user@example.com"
+                  }
+                },
+                {
+                  "key": "marker",
+                  "value": {
+                    "stringValue": "__RUN_ID__"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

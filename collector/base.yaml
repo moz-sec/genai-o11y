@@ -1,0 +1,44 @@
+# genai-o11y: replaces /otel-lgtm/otelcol-config.yaml of grafana/otel-lgtm 0.41.1.
+# Receivers, exporters and extensions are copied from the bundled config.
+# Processors and pipelines live in the profile file (strict.yaml or standard.yaml),
+# which is loaded as a second --config and merged on top of this file.
+#
+# When you bump the image, compare this file with the new bundled config.
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        # 0.0.0.0 inside the container only; compose.yaml publishes it on 127.0.0.1.
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+  prometheus/collector:
+    config:
+      scrape_configs:
+        - job_name: "opentelemetry-collector"
+          scrape_interval: 15s
+          static_configs:
+            - targets: ["127.0.0.1:8888"]
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+    path: "/ready"
+
+exporters:
+  otlp_http/metrics:
+    endpoint: http://127.0.0.1:9090/api/v1/otlp
+    tls:
+      insecure: true
+  otlp_http/traces:
+    endpoint: http://127.0.0.1:4418
+    tls:
+      insecure: true
+  otlp_http/logs:
+    endpoint: http://127.0.0.1:3100/otlp
+    tls:
+      insecure: true
+
+service:
+  extensions: [health_check]

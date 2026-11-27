@@ -24,3 +24,33 @@ grafana_api() {
   curl -fsS -u "admin:${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD is not set}" \
     -X "$method" "$GRAFANA_URL$path" "$@"
 }
+
+# Datasource UIDs provisioned by grafana/otel-lgtm.
+LOKI_UID=loki
+PROM_UID=prometheus
+TEMPO_UID=tempo
+
+# ds_query_loki <logql>: log lines from the last hour, as Loki JSON.
+ds_query_loki() {
+  grafana_api GET "/api/datasources/proxy/uid/$LOKI_UID/loki/api/v1/query_range" -G \
+    --data-urlencode "query=$1" --data-urlencode "since=1h" --data-urlencode "limit=1000"
+}
+
+# ds_query_prom <promql>: an instant query, as Prometheus JSON.
+ds_query_prom() {
+  grafana_api GET "/api/datasources/proxy/uid/$PROM_UID/api/v1/query" -G \
+    --data-urlencode "query=$1"
+}
+
+# ds_search_tempo <traceql>: traces from the last hour that match the query.
+ds_search_tempo() {
+  local now
+  now="$(date +%s)"
+  grafana_api GET "/api/datasources/proxy/uid/$TEMPO_UID/api/search" -G \
+    --data-urlencode "q=$1" --data-urlencode "start=$((now - 3600))" --data-urlencode "end=$((now + 60))"
+}
+
+# ds_get_trace <trace id>: one trace as OTLP JSON.
+ds_get_trace() {
+  grafana_api GET "/api/datasources/proxy/uid/$TEMPO_UID/api/v2/traces/$1" -H 'Accept: application/json'
+}

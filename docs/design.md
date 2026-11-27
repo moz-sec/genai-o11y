@@ -40,8 +40,8 @@ Claude Code と OpenAI Codex CLI の利用状況（使用量・コスト・ツ�
 ### grafana/docker-otel-lgtm
 
 - 最新は `0.41.1`（2026-11-20）。digest は `sha256:1b852b77d7bcadb7699bfe7c78a51d059dff85168de674728cf7abf4474645e5`。実装時に `docker buildx imagetools inspect grafana/otel-lgtm:0.41.1` で再確認する。
-- 同梱の Collector は `otelcol-contrib` v0.165.0。そのため `attributes`、`transform`、`redaction`、`deltatocumulative` などのプロセッサが使えるはず。実装時に `components` サブコマンドで確認する。
-- Collector の設定は `/otel-lgtm/otelcol-config.yaml`。bind mount で丸ごと差し替える。
+- 同梱の Collector は `otelcol-contrib` v0.165.0。`components` サブコマンドで、`resource`、`filter`、`transform`、`redaction`、`delta_to_cumulative`、`batch` があることを確認した。このバージョンからコンポーネント名はアンダースコア区切り（`delta_to_cumulative`、`otlp_http`）になっている。
+- Collector の設定は `/otel-lgtm/otelcol-config.yaml`。起動スクリプト（`run-otelcol.sh`）は `OTELCOL_EXTRA_ARGS` を読むため、2 つ目の `--config` を渡せる。
 - ダッシュボードは `/otel-lgtm/grafana/conf/provisioning/dashboards/` 配下に、JSON とプロバイダ YAML をマウントする。
 - データは `/data` 配下に保存される。named volume に永続化する。
 - ポート: 3000（Grafana）、4317 / 4318（OTLP）、9090（Prometheus）、3200（Tempo）、4040（Pyroscope）
@@ -123,7 +123,7 @@ Codex CLI   ─┘        │
        │ otelcol-contrib                               │
        │  receivers: otlp                              │
        │  processors: (プロファイル別サニタイズ)        │
-       │              deltatocumulative, batch         │
+       │              delta_to_cumulative, batch       │
        │  → Prometheus / Loki / Tempo                  │
        │ Grafana :3000 （プロビジョニング済みダッシュボード）│
        └───────────────────────────────────────────────┘
@@ -131,7 +131,7 @@ Codex CLI   ─┘        │
 ```
 
 - プロトコルは OTLP/HTTP（4318）にそろえる。Claude のデフォルト値に合わせるためと、Codex の HTTP エンドポイント指定がシンプルなため。4317 も `127.0.0.1` で公開しておく。
-- テンポラリティ: Collector に `deltatocumulative` を入れる。これで、どのエージェントから delta が来ても Prometheus へ取り込める。加えて、Claude 側でも `OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE=cumulative` を設定しておく。
+- テンポラリティ: Collector に `delta_to_cumulative` を入れる。これで、どのエージェントから delta が来ても Prometheus へ取り込める。加えて、Claude 側でも `OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE=cumulative` を設定しておく。
 - 9090 / 3200 / 4040 は公開しない（Grafana 経由で見られるため）。
 
 ### 5.3 収集ポリシー
@@ -145,12 +145,12 @@ Codex CLI   ─┘        │
 | アシスタント応答本文 | オフ、Collector でも削除 | オフ |
 | ツール引数・出力 | Claude: `OTEL_LOG_TOOL_DETAILS` はオフ。Collector で `tool_parameters`、`tool_input`、`error`（本文。`status_code` と `error_type` は残す）、Codex の `arguments`、`output` を削除 | Claude: `OTEL_LOG_TOOL_DETAILS=1`。Codex もそのまま残す |
 | 個人識別属性（`user.email`、`user.account_*`、`user.id`、`organization.id`、`host.name`、`host.id`） | Collector で削除。Claude は `OTEL_METRICS_INCLUDE_ACCOUNT_UUID=false` | 残す |
-| 生の API ボディ | オフ、Collector で該当イベントを破棄 | オフ |
+| 生の API ボディ | オフ、Collector で該当イベントを破棄 | オフ、Collector で該当イベントを破棄（プロンプト本文を含むため） |
 | `session.id` / `conversation.id` | 残す（セッション単位の集計に必要） | 残す |
 
-`strict` の Collector では属性名を削除する（`attributes` / `transform`）。加えて、属性名は将来変わりうるため、メールアドレスらしい文字列のマスク（`redaction` / `transform` の正規表現）を最後の防御として入れる。
+`strict` の Collector では属性名を削除する（`attributes` / `transform`）。加えて、属性名は将来変わりうるため、メールアドレスらしい文字列のマスク（`transform` の `replace_all_patterns`）を最後の防御として入れる。リソース属性、ログ・スパン・データポイントの属性、文字列のログ本文をマスクの対象とする。
 
-両プロファイルとも、プロンプト本文は Collector でも削除する（エージェント側の設定を誤ったときの保険）。
+両プロファイルとも、プロンプト本文は Collector でも削除する（エージェント側の設定を誤ったときの保険）。生の API ボディ（`api_request_body` / `api_response_body`）もプロンプト本文を含むため、両プロファイルで破棄する。
 
 ### 5.4 Grafana
 

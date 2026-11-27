@@ -17,8 +17,12 @@ services:
       PROMETHEUS_EXTRA_ARGS: --storage.tsdb.retention.time=30d
       LOKI_EXTRA_ARGS: -compactor.retention-enabled=true -compactor.delete-request-store=filesystem -store.retention=720h
       TEMPO_EXTRA_ARGS: -backend-worker.compaction.block-retention=720h -backend-scheduler.provider.work.compaction.block-retention=720h
+      # The profile file is merged on top of base.yaml (docs/design.md §5.3).
+      OTELCOL_EXTRA_ARGS: --config=file:/otel-lgtm/profile.yaml
     volumes:
       - genai-o11y-data:/data
+      - ./collector/base.yaml:/otel-lgtm/otelcol-config.yaml:ro
+      - ./collector/${PROFILE:-strict}.yaml:/otel-lgtm/profile.yaml:ro
 
 volumes:
   genai-o11y-data:

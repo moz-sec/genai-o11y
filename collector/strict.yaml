@@ -1,0 +1,84 @@
+# profile: strict
+# Stores counts, durations, models and outcomes, but no content and no identity.
+# Removes prompt text, responses, tool arguments and output, error bodies,
+# account and organization IDs, emails and host names. See docs/design.md §5.3.
+
+processors:
+  resource/identity:
+    attributes:
+      - { key: host.name, action: delete }
+      - { key: host.id, action: delete }
+      - { key: user.email, action: delete }
+      - { key: user.account_uuid, action: delete }
+      - { key: user.account_id, action: delete }
+      - { key: user.id, action: delete }
+      - { key: organization.id, action: delete }
+
+  filter/raw_bodies:
+    error_mode: ignore
+    logs:
+      log_record:
+        - 'IsMatch(attributes["event.name"], "api_(request|response)_body$")'
+        - 'IsString(body) and IsMatch(body, "api_(request|response)_body$")'
+
+  # Attribute names to drop. error is the error body; error_type and status_code stay.
+  transform/content:
+    error_mode: ignore
+    log_statements:
+      - context: log
+        statements:
+          - delete_matching_keys(attributes, "^(prompt|prompt_text|response|assistant_response|tool_parameters|tool_input|error|arguments|output|user\\.email|user\\.account_uuid|user\\.account_id|user\\.id|organization\\.id)$")
+    trace_statements:
+      - context: span
+        statements:
+          - delete_matching_keys(attributes, "^(prompt|prompt_text|response|assistant_response|tool_parameters|tool_input|error|arguments|output|user\\.email|user\\.account_uuid|user\\.account_id|user\\.id|organization\\.id)$")
+    metric_statements:
+      - context: datapoint
+        statements:
+          - delete_matching_keys(attributes, "^(user\\.email|user\\.account_uuid|user\\.account_id|user\\.id|organization\\.id)$")
+
+  # Last line of defence: mask anything that looks like an email address,
+  # including in attributes whose names we do not know yet.
+  transform/mask_email:
+    error_mode: ignore
+    log_statements:
+      - context: resource
+        statements:
+          - replace_all_patterns(attributes, "value", "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}", "[email]")
+      - context: log
+        statements:
+          - replace_all_patterns(attributes, "value", "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}", "[email]")
+          - replace_pattern(body, "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}", "[email]") where IsString(body)
+    trace_statements:
+      - context: resource
+        statements:
+          - replace_all_patterns(attributes, "value", "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}", "[email]")
+      - context: span
+        statements:
+          - replace_all_patterns(attributes, "value", "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}", "[email]")
+    metric_statements:
+      - context: resource
+        statements:
+          - replace_all_patterns(attributes, "value", "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}", "[email]")
+      - context: datapoint
+        statements:
+          - replace_all_patterns(attributes, "value", "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}", "[email]")
+
+  delta_to_cumulative:
+
+  batch:
+
+service:
+  pipelines:
+    logs:
+      receivers: [otlp]
+      processors: [resource/identity, filter/raw_bodies, transform/content, transform/mask_email, batch]
+      exporters: [otlp_http/logs]
+    metrics:
+      receivers: [otlp, prometheus/collector]
+      processors: [resource/identity, transform/content, transform/mask_email, delta_to_cumulative, batch]
+      exporters: [otlp_http/metrics]
+    traces:
+      receivers: [otlp]
+      processors: [resource/identity, transform/content, transform/mask_email, batch]
+      exporters: [otlp_http/traces]
