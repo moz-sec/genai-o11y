@@ -26,6 +26,49 @@ OpenTelemetry のメトリクス、ログ、トレースを集め、ローカル
   既存の値とぶつかったら中止する。
   設定ファイルを変えたくない場合は、いま使っているシェルでだけ有効にもできる。
 
+## アーキテクチャ
+
+```mermaid
+flowchart LR
+  subgraph host["手元の Mac"]
+    claude["Claude Code"]
+    codex["Codex CLI"]
+    browser["ブラウザ"]
+    subgraph lgtm["grafana/otel-lgtm コンテナ"]
+      otelcol["OpenTelemetry Collector<br/>base.yaml + プロファイル"]
+      prom[("Prometheus<br/>メトリクス")]
+      loki[("Loki<br/>ログ・イベント")]
+      tempo[("Tempo<br/>トレース")]
+      grafana["Grafana<br/>ダッシュボード"]
+    end
+    vol[("Docker ボリューム<br/>genai-o11y-data")]
+  end
+
+  claude -- "OTLP/HTTP<br/>127.0.0.1:4318" --> otelcol
+  codex -- "OTLP/HTTP<br/>127.0.0.1:4318" --> otelcol
+  otelcol --> prom
+  otelcol --> loki
+  otelcol --> tempo
+  prom --> grafana
+  loki --> grafana
+  tempo --> grafana
+  browser -- "127.0.0.1:3000<br/>パスワード認証" --> grafana
+  prom -.- vol
+  loki -.- vol
+  tempo -.- vol
+```
+
+- エージェントは、メトリクス、ログ（イベント）、トレースを OTLP で `127.0.0.1:4318` に送る。
+  OTLP/gRPC の `4317` も開いている。
+- Collector はプロファイルに従ってデータを削ってから、Prometheus、Loki、Tempo に書き込む。
+  設定は `collector/base.yaml` に `collector/<プロファイル>.yaml` を重ねたものである。
+- Grafana は 3 つすべてを読み、`grafana/dashboards/` のダッシュボードを表示する。
+- データは `genai-o11y-data` ボリュームに 30 日間保存する。
+- 公開するのは Grafana と OTLP だけである。
+  Prometheus、Loki、Tempo の API は、`compose.debug.yaml` を付けて起動しない限りコンテナの外に出さない（[セキュリティについて](#セキュリティについて)を参照）。
+
+詳しい設計とその理由は [docs/design.md](docs/design.md) にあります。
+
 ## 必要なもの
 
 - Apple silicon の macOS
