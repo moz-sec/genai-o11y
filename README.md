@@ -73,7 +73,8 @@ See [docs/design.md](docs/design.md) for the exact attribute list.
 - Binding ports to `127.0.0.1` blocks inbound access from other machines.
   It does not restrict outbound traffic from the container.
 - Enable disk encryption (FileVault) to protect the stored data.
-- To delete all stored telemetry, run `docker compose down -v`.
+- Metrics, logs and traces are kept for 30 days.
+  To delete all stored telemetry, run `docker compose down -v`.
 
 To report a vulnerability, see [SECURITY.md](SECURITY.md).
 

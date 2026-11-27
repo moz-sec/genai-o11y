@@ -174,7 +174,10 @@ Codex CLI   ─┘        │
 
 ### 5.6 データ保持
 
-- 目安は 30 日。同梱の Prometheus / Loki / Tempo の保持期間を、環境変数や引数を使って変えられる範囲内で設定する。変えるために設定ファイルの丸ごと差し替えが必要な場合は、無理をせずデフォルト値のまま README に明記する（イメージ更新時の追従コストを優先する）。
+- 保持期間は 30 日。同梱の起動スクリプトが読む `*_EXTRA_ARGS` 環境変数で、各サービスに引数を渡して設定する。設定ファイルは差し替えない。
+  - Prometheus：`PROMETHEUS_EXTRA_ARGS=--storage.tsdb.retention.time=30d`（デフォルトは 15 日）
+  - Loki：`LOKI_EXTRA_ARGS` で compactor の retention を有効にし、`-store.retention=720h` を指定する（デフォルトでは削除しない）
+  - Tempo 3.x：`TEMPO_EXTRA_ARGS` で `-backend-worker.compaction.block-retention=720h` などを指定する（デフォルトは 14 日）
 - データを消すときは `docker compose down -v` を使う。README に書く。
 
 ### 5.7 検証（`scripts/verify.sh`）

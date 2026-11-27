@@ -1,0 +1,24 @@
+# genai-o11y: a single grafana/otel-lgtm container, reachable only from localhost.
+# Hard rule: every published port uses 127.0.0.1. Never publish 9090, 3200 or 4040.
+name: genai-o11y
+
+services:
+  lgtm:
+    image: ${LGTM_IMAGE:?set LGTM_IMAGE in .env}
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000" # Grafana
+      - "127.0.0.1:4317:4317" # OTLP gRPC
+      - "127.0.0.1:4318:4318" # OTLP HTTP
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?set GRAFANA_ADMIN_PASSWORD in .env}
+      # Keep about 30 days of data (docs/design.md §5.6).
+      PROMETHEUS_EXTRA_ARGS: --storage.tsdb.retention.time=30d
+      LOKI_EXTRA_ARGS: -compactor.retention-enabled=true -compactor.delete-request-store=filesystem -store.retention=720h
+      TEMPO_EXTRA_ARGS: -backend-worker.compaction.block-retention=720h -backend-scheduler.provider.work.compaction.block-retention=720h
+    volumes:
+      - genai-o11y-data:/data
+
+volumes:
+  genai-o11y-data:
